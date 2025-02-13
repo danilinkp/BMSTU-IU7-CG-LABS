@@ -5,6 +5,8 @@
 #include <QGraphicsScene>
 #include <QMessageBox>
 
+#include "point.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui
 {
@@ -14,7 +16,7 @@ QT_END_NAMESPACE
 
 class MainWindow: public QMainWindow
 {
-	Q_OBJECT
+Q_OBJECT
 public:
 	MainWindow(QWidget *parent = nullptr);
 	~MainWindow();
@@ -22,8 +24,10 @@ public:
 private:
 	static void show_task();
 	static void add_point();
+
 private:
 	Ui::MainWindow *ui;
 	QGraphicsScene *scene;
+	QVector<Point> points;
 };
 #endif // MAINWINDOW_H

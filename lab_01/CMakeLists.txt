@@ -10,16 +10,19 @@ set(CMAKE_AUTOUIC_SEARCH_PATHS ${PROJECT_SOURCE_DIR}/views)
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/inc
-        ${PROJECT_SOURCE_DIR}/src
 )
 
 set(SOURCES
         src/main.cpp
         src/mainwindow.cpp
+        src/point.cpp
+        src/triangle.cpp
 )
 
 set(HEADERS
         inc/mainwindow.h
+        inc/point.h
+        inc/triangle.h
 )
 
 set(UI_FILES

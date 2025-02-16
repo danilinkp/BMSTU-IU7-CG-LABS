@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QGraphicsScene>
 #include <QMessageBox>
+#include <QGraphicsTextItem>
 
 #include "point.h"
 #include "triangle.h"
@@ -16,14 +17,14 @@ QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow {
 Q_OBJECT
+public:
+	MainWindow(QWidget *parent = nullptr);
+	~MainWindow();
+
 private:
 	Ui::MainWindow *ui;
 	QGraphicsScene *scene;
 	QVector<Point> points;
-
-public:
-	MainWindow(QWidget *parent = nullptr);
-	~MainWindow();
 
 private:
 	static void show_task();
@@ -34,6 +35,7 @@ private:
 	void del_last_point();
 	void del_all_points();
 	Triangle best_triangle();
+	void draw(const Triangle &triangle);
 	void show_result();
 };
 #endif // MAINWINDOW_H

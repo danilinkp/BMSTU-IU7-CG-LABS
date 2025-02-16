@@ -1,6 +1,7 @@
 #include "triangle.h"
-#include "cmath"
-#include "algorithm"
+#include <cmath>
+#include <algorithm>
+#include <iostream>
 
 #define EPS 1e-9
 
@@ -16,41 +17,77 @@ bool Triangle::is_triangle() const {
 	return area() > EPS;
 }
 
-double Triangle::angle_between_height_and_median(const Point &vertex,
-												 const Point &opposite1,
-												 const Point &opposite2) {
-	// Середина стороны, противоположной vertex
-	Point M((opposite1.get_x() + opposite2.get_x()) / 2, (opposite1.get_y() + opposite2.get_y()) / 2);
+double Triangle::angle_between_height_and_median(const Point &vertex, const Point &opposite1, const Point &opposite2) {
+	Point M((opposite1.get_x() + opposite2.get_x()) / 2,
+			(opposite1.get_y() + opposite2.get_y()) / 2);
 
-	// Уравнение стороны opposite1-opposite2: (y - y2) = k * (x - x2)
-	double k_side = (opposite2.get_y() - opposite1.get_y()) / (opposite2.get_x() - opposite1.get_x());
+	double a = opposite2.distance(opposite1);
+	double b = vertex.distance(opposite1);
+	double c = vertex.distance(opposite2);
 
-	// Уравнение высоты: (y - vertex_y) = k_height * (x - vertex_x), где k_height = -1 / k_side
-	double k_height = -1 / k_side;
+	if (std::abs(b - c) < 1e-10)
+		return 0.0;
 
-	// Находим точку пересечения H высоты и стороны opposite1-opposite2
-	double x_H = (k_side * opposite1.get_x() - k_height * vertex.get_x() + vertex.get_y() - opposite1.get_y())
-		/ (k_side - k_height);
-	double y_H = k_side * (x_H - opposite1.get_x()) + opposite1.get_y();
-	Point H(x_H, y_H);
+	// Находим высоту треугольника
+	// Полупериметр
+	double p = (a + b + c) / 2;
+	// Площадь треугольника по формуле Герона
+	double S = std::sqrt(p * (p - a) * (p - b) * (p - c));
+	// Высота к стороне a
+	double h = 2 * S / a;
 
-	// Вектор медианы vertex-M
+	// Находим основание высоты
+	// Используем теорему о пропорциональных отрезках
+	double x = (b * b - c * c) / (2 * a) + a / 2;
+
+	// Точка основания высоты
+	double t = x / a; // параметр для параметрического уравнения прямой
+	Point H(opposite1.get_x() + t * (opposite2.get_x() - opposite1.get_x()),
+			opposite1.get_y() + t * (opposite2.get_y() - opposite1.get_y()));
+
+	// Вектор медианы
 	Point median_vector(M.get_x() - vertex.get_x(), M.get_y() - vertex.get_y());
-
-	// Вектор высоты vertex-H
+	// Вектор высоты
 	Point height_vector(H.get_x() - vertex.get_x(), H.get_y() - vertex.get_y());
 
-	// Скалярное произведение векторов
 	double dot_product = median_vector.get_x() * height_vector.get_x() + median_vector.get_y() * height_vector.get_y();
 
 	// Длины векторов
-	double len_median = std::hypot(median_vector.get_x(), median_vector.get_y());
-	double len_height = std::hypot(height_vector.get_x(), height_vector.get_y());
+	double len_median = std::sqrt(std::pow(median_vector.get_x(), 2) + std::pow(median_vector.get_y(), 2));
+	double len_height = std::sqrt(std::pow(height_vector.get_x(), 2) + std::pow(height_vector.get_y(), 2));
 
-	// Угол между векторами (в радианах)
-	double angle = std::acos(dot_product / (len_median * len_height));
+	if (len_median < EPS || len_height < EPS)
+		return 0;
 
-	return angle * 180 / M_PI;
+	// Угол между векторами
+	double cos_angle = dot_product / (len_median * len_height);
+	// Защита от численных ошибок
+	if (cos_angle > 1)
+		cos_angle = 1;
+	if (cos_angle < -1)
+		cos_angle = -1;
+
+	return std::acos(cos_angle) * 180.0 / M_PI;
+}
+
+void Triangle::get_points_for_min_angle(Point &vertex, Point &opposite1, Point &opposite2) const {
+	double angle_a = angle_between_height_and_median(a, b, c);
+	double angle_b = angle_between_height_and_median(b, c, a);
+	double angle_c = angle_between_height_and_median(c, a, b);
+
+	if (angle_a <= angle_b && angle_a <= angle_c) {
+		vertex = a;
+		opposite1 = b;
+		opposite2 = c;
+	} else if (angle_b <= angle_a && angle_b <= angle_c) {
+		vertex = b;
+		opposite1 = c;
+		opposite2 = a;
+	} else {
+		vertex = c;
+		opposite1 = a;
+		opposite2 = b;
+	}
 }
 
 double Triangle::min_angle_hm() const {

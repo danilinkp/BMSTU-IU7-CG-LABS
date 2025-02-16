@@ -11,12 +11,12 @@ public:
 
 	Point(double x_, double y_) : x(x_), y(y_) {}
 
-	double get_x() const;
-	double get_y() const;
+	[[nodiscard]] double get_x() const;
+	[[nodiscard]] double get_y() const;
 	void set_x(double x_);
 	void set_y(double y_);
 
-	double distance(const Point &other) const;
+	[[nodiscard]] double distance(const Point &other) const;
 };
 
 #endif //POINT_H

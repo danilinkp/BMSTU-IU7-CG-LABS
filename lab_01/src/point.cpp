@@ -23,7 +23,7 @@ void Point::set_y(double y_)
 
 double Point::distance(const Point &other) const
 {
-	double dx = x - other.x;
-	double dy = y - other.y;
+	double dx = x - other.get_x();
+	double dy = y - other.get_y();
 	return std::sqrt(dx * dx + dy * dy);
 }

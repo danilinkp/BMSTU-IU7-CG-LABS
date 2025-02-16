@@ -2,16 +2,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), scene(new QGraphicsScene) {
 	ui->setupUi(this);
 	this->setWindowTitle("1-ая лаба");
 	this->setFixedSize(1000, 750);
-	this->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
 	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-
-	scene = new QGraphicsScene();
 
 	auto validator = new QDoubleValidator;
 	validator->setLocale(QLocale::C);
@@ -110,7 +107,6 @@ Triangle MainWindow::best_triangle() {
 				Triangle curr_triangle(points[i], points[j], points[k]);
 				if (curr_triangle.is_triangle()) {
 					double curr_angle = curr_triangle.min_angle_hm();
-//					std::cout << "area " << curr_triangle.area() << " angle " << curr_angle << std::endl;
 					if (curr_angle < min_angle) {
 						best_triangle = curr_triangle;
 						min_angle = curr_angle;
@@ -120,7 +116,36 @@ Triangle MainWindow::best_triangle() {
 	return best_triangle;
 }
 
-void MainWindow::draw(const Triangle &triangle) {
+void MainWindow::draw_triangle(const Triangle &triangle, const QPen &pen) {
+	scene->addLine(triangle.get_a().get_x(), triangle.get_a().get_y(),
+				   triangle.get_b().get_x(), triangle.get_b().get_y(), pen);
+	scene->addLine(triangle.get_b().get_x(), triangle.get_b().get_y(),
+				   triangle.get_c().get_x(), triangle.get_c().get_y(), pen);
+	scene->addLine(triangle.get_c().get_x(), triangle.get_c().get_y(),
+				   triangle.get_a().get_x(), triangle.get_a().get_y(), pen);
+}
+
+void MainWindow::draw_points(const Triangle &triangle, double point_size, const QPen &pen) {
+	scene->addEllipse(triangle.get_a().get_x() - point_size / 2,
+					  triangle.get_a().get_y() - point_size / 2,
+					  point_size, point_size, pen);
+	scene->addEllipse(triangle.get_b().get_x() - point_size / 2,
+					  triangle.get_b().get_y() - point_size / 2,
+					  point_size, point_size, pen);
+	scene->addEllipse(triangle.get_c().get_x() - point_size / 2,
+					  triangle.get_c().get_y() - point_size / 2,
+					  point_size, point_size, pen);
+}
+
+void MainWindow::set_point_text(const Point &point, const QString &string,
+								const QFont &font, const QTransform &transform) {
+	QString coord = string.arg(point.get_x()).arg(point.get_y());
+	auto text = scene->addText(coord, font);
+	text->setTransform(transform);
+	text->setPos(point.get_x(), point.get_y());
+}
+
+void MainWindow::draw_result(const Triangle &triangle) {
 	scene->clear();
 
 	double min_x = std::min({triangle.get_a().get_x(), triangle.get_b().get_x(), triangle.get_c().get_x()});
@@ -147,47 +172,21 @@ void MainWindow::draw(const Triangle &triangle) {
 
 	scene->setSceneRect(min_x, min_y, max_x - min_x, max_y - min_y);
 
-	QPen triangle_pen(Qt::black, 2 / scale);
-	scene->addLine(triangle.get_a().get_x(), triangle.get_a().get_y(),
-				   triangle.get_b().get_x(), triangle.get_b().get_y(), triangle_pen);
-	scene->addLine(triangle.get_b().get_x(), triangle.get_b().get_y(),
-				   triangle.get_c().get_x(), triangle.get_c().get_y(), triangle_pen);
-	scene->addLine(triangle.get_c().get_x(), triangle.get_c().get_y(),
-				   triangle.get_a().get_x(), triangle.get_a().get_y(), triangle_pen);
-
-	// Рисуем точки вершин
-	double point_size = 4 / scale;
-	QPen point_pen(Qt::red, point_size);
-	scene->addEllipse(triangle.get_a().get_x() - point_size / 2,
-					  triangle.get_a().get_y() - point_size / 2,
-					  point_size, point_size, point_pen);
-	scene->addEllipse(triangle.get_b().get_x() - point_size / 2,
-					  triangle.get_b().get_y() - point_size / 2,
-					  point_size, point_size, point_pen);
-	scene->addEllipse(triangle.get_c().get_x() - point_size / 2,
-					  triangle.get_c().get_y() - point_size / 2,
-					  point_size, point_size, point_pen);
-
 	QFont font;
 	font.setPointSize(10);
-
 	QTransform text_transform;
 	text_transform.scale(1 / scale, -1 / scale);
 
-	QString a_coord = QString("A(%1; %2)").arg(triangle.get_a().get_x()).arg(triangle.get_a().get_y());
-	auto text_a = scene->addText(a_coord, font);
-	text_a->setTransform(text_transform);
-	text_a->setPos(triangle.get_a().get_x(), triangle.get_a().get_y());
+	QPen triangle_pen(Qt::black, 2 / scale);
+	draw_triangle(triangle, triangle_pen);
 
-	QString b_coord = QString("B(%1; %2)").arg(triangle.get_b().get_x()).arg(triangle.get_b().get_y());
-	auto text_b = scene->addText(b_coord, font);
-	text_b->setTransform(text_transform);
-	text_b->setPos(triangle.get_b().get_x(), triangle.get_b().get_y());
+	double point_size = 4 / scale;
+	QPen point_pen(Qt::red, point_size);
+	draw_points(triangle, point_size, point_pen);
 
-	QString c_coord = QString("C(%1; %2)").arg(triangle.get_c().get_x()).arg(triangle.get_c().get_y());
-	auto text_c = scene->addText(c_coord, font);
-	text_c->setTransform(text_transform);
-	text_c->setPos(triangle.get_c().get_x(), triangle.get_c().get_y());
+	set_point_text(triangle.get_a(), "A(%1; %2)", font, text_transform);
+	set_point_text(triangle.get_b(), "B(%1; %2)", font, text_transform);
+	set_point_text(triangle.get_c(), "C(%1; %2)", font, text_transform);
 
 	Point vertex, opposite1, opposite2;
 	triangle.get_points_for_min_angle(vertex, opposite1, opposite2);
@@ -195,12 +194,9 @@ void MainWindow::draw(const Triangle &triangle) {
 	Point M((opposite1.get_x() + opposite2.get_x()) / 2,
 			(opposite1.get_y() + opposite2.get_y()) / 2);
 
-	double a = std::sqrt(std::pow(opposite2.get_x() - opposite1.get_x(), 2) +
-		std::pow(opposite2.get_y() - opposite1.get_y(), 2));
-	double b = std::sqrt(std::pow(vertex.get_x() - opposite1.get_x(), 2) +
-		std::pow(vertex.get_y() - opposite1.get_y(), 2));
-	double c = std::sqrt(std::pow(vertex.get_x() - opposite2.get_x(), 2) +
-		std::pow(vertex.get_y() - opposite2.get_y(), 2));
+	double a = opposite2.distance(opposite1);
+	double b = vertex.distance(opposite1);
+	double c = vertex.distance(opposite2);
 
 	double x = (b * b - c * c) / (2 * a) + a / 2;
 	double t = x / a;
@@ -213,20 +209,11 @@ void MainWindow::draw(const Triangle &triangle) {
 	QPen height_pen(Qt::red, 2 / scale);
 	scene->addLine(vertex.get_x(), vertex.get_y(), H.get_x(), H.get_y(), height_pen);
 
-	scene->addEllipse(M.get_x() - point_size / 2, M.get_y() - point_size / 2,
-					  point_size, point_size, point_pen);
-	scene->addEllipse(H.get_x() - point_size / 2, H.get_y() - point_size / 2,
-					  point_size, point_size, point_pen);
+	scene->addEllipse(M.get_x() - point_size / 2, M.get_y() - point_size / 2, point_size, point_size, point_pen);
+	scene->addEllipse(H.get_x() - point_size / 2, H.get_y() - point_size / 2, point_size, point_size, point_pen);
 
-	QString m_coord = QString("M(%1; %2)").arg(M.get_x()).arg(M.get_y());
-	auto text_m = scene->addText(m_coord, font);
-	text_m->setTransform(text_transform);
-	text_m->setPos(M.get_x(), M.get_y());
-
-	QString h_coord = QString("H(%1; %2)").arg(H.get_x()).arg(H.get_y());
-	auto text_h = scene->addText(h_coord, font);
-	text_h->setTransform(text_transform);
-	text_h->setPos(H.get_x(), H.get_y());
+	set_point_text(M, "M(%1; %2)", font, text_transform);
+	set_point_text(H, "H(%1; %2)", font, text_transform);
 }
 
 void MainWindow::show_result() {
@@ -240,7 +227,7 @@ void MainWindow::show_result() {
 		if (!triangle.is_triangle())
 			ui->answer_text_edit->setPlainText("На заданном множестве точек нет треугольника.");
 		else {
-			draw(triangle);
+			draw_result(triangle);
 			QString result = QString("Найден треугольник с вершинами:\n"
 									 "A(%1; %2)\n"
 									 "B(%3; %4)\n"

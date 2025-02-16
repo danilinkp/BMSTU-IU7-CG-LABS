@@ -8,9 +8,8 @@
 double Triangle::area() const {
 	return std::abs(
 		a.get_x() * (b.get_y() - c.get_y()) +
-			b.get_x() * (c.get_y() - a.get_y()) +
-			c.get_x() * (a.get_y() - b.get_y())
-	) / 2.0;
+		b.get_x() * (c.get_y() - a.get_y()) +
+		c.get_x() * (a.get_y() - b.get_y()) )/ 2.0;
 }
 
 bool Triangle::is_triangle() const {
@@ -18,8 +17,7 @@ bool Triangle::is_triangle() const {
 }
 
 double Triangle::angle_between_height_and_median(const Point &vertex, const Point &opposite1, const Point &opposite2) {
-	Point M((opposite1.get_x() + opposite2.get_x()) / 2,
-			(opposite1.get_y() + opposite2.get_y()) / 2);
+	Point M((opposite1.get_x() + opposite2.get_x()) / 2, (opposite1.get_y() + opposite2.get_y()) / 2);
 
 	double a = opposite2.distance(opposite1);
 	double b = vertex.distance(opposite1);
@@ -27,14 +25,6 @@ double Triangle::angle_between_height_and_median(const Point &vertex, const Poin
 
 	if (std::abs(b - c) < 1e-10)
 		return 0.0;
-
-	// Находим высоту треугольника
-	// Полупериметр
-	double p = (a + b + c) / 2;
-	// Площадь треугольника по формуле Герона
-	double S = std::sqrt(p * (p - a) * (p - b) * (p - c));
-	// Высота к стороне a
-	double h = 2 * S / a;
 
 	// Находим основание высоты
 	// Используем теорему о пропорциональных отрезках
@@ -45,9 +35,7 @@ double Triangle::angle_between_height_and_median(const Point &vertex, const Poin
 	Point H(opposite1.get_x() + t * (opposite2.get_x() - opposite1.get_x()),
 			opposite1.get_y() + t * (opposite2.get_y() - opposite1.get_y()));
 
-	// Вектор медианы
 	Point median_vector(M.get_x() - vertex.get_x(), M.get_y() - vertex.get_y());
-	// Вектор высоты
 	Point height_vector(H.get_x() - vertex.get_x(), H.get_y() - vertex.get_y());
 
 	double dot_product = median_vector.get_x() * height_vector.get_x() + median_vector.get_y() * height_vector.get_y();
@@ -94,6 +82,8 @@ double Triangle::min_angle_hm() const {
 	double angle_A = angle_between_height_and_median(a, b, c);
 	double angle_B = angle_between_height_and_median(b, a, c);
 	double angle_C = angle_between_height_and_median(c, a, b);
+
+	std::cout << angle_A << " " << angle_B << " " << angle_C << std::endl;
 
 	return std::min({angle_A, angle_B, angle_C});
 }

@@ -4,8 +4,8 @@
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), scene(new QGraphicsScene) {
 	ui->setupUi(this);
-	this->setWindowTitle("1-ая лаба");
-	this->setFixedSize(1000, 750);
+	setWindowTitle("1-ая лаба");
+	setFixedSize(1000, 750);
 
 	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

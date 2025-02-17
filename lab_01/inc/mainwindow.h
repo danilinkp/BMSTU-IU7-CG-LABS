@@ -26,19 +26,21 @@ private:
 	QGraphicsScene *scene;
 	QVector<Point> points;
 
-private:
+private slots:
 	static void show_task();
 	void add_point();
-	void read_table();
-	void remove_row_from_table(int row);
 	void del_point();
 	void del_last_point();
 	void del_all_points();
+	void show_result();
+
+private:
+	void read_table();
+	void remove_row_from_table(int row);
 	Triangle best_triangle();
 	void draw_triangle(const Triangle &triangle, const QPen &pen);
 	void draw_points(const Triangle &triangle, double point_size, const QPen &pen);
 	void set_point_text(const Point &point, const QString &string, const QFont &font, const QTransform &transform);
 	void draw_result(const Triangle &triangle);
-	void show_result();
 };
 #endif // MAINWINDOW_H

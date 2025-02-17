@@ -11,12 +11,12 @@ double Point::get_y() const
 	return y;
 }
 
-void Point::set_x(double x_)
+[[maybe_unused]] void Point::set_x(double x_)
 {
 	x = x_;
 }
 
-void Point::set_y(double y_)
+[[maybe_unused]] void Point::set_y(double y_)
 {
 	y = y_;
 }

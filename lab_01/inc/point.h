@@ -13,8 +13,8 @@ public:
 
 	[[nodiscard]] double get_x() const;
 	[[nodiscard]] double get_y() const;
-	void set_x(double x_);
-	void set_y(double y_);
+	[[maybe_unused]] void set_x(double x_);
+	[[maybe_unused]] void set_y(double y_);
 
 	[[nodiscard]] double distance(const Point &other) const;
 };

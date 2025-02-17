@@ -8,8 +8,8 @@
 double Triangle::area() const {
 	return std::abs(
 		a.get_x() * (b.get_y() - c.get_y()) +
-		b.get_x() * (c.get_y() - a.get_y()) +
-		c.get_x() * (a.get_y() - b.get_y()) )/ 2.0;
+			b.get_x() * (c.get_y() - a.get_y()) +
+			c.get_x() * (a.get_y() - b.get_y())) / 2.0;
 }
 
 bool Triangle::is_triangle() const {
@@ -23,7 +23,7 @@ double Triangle::angle_between_height_and_median(const Point &vertex, const Poin
 	double b = vertex.distance(opposite1);
 	double c = vertex.distance(opposite2);
 
-	if (std::abs(b - c) < 1e-10)
+	if (std::abs(b - c) < EPS)
 		return 0.0;
 
 	// Находим основание высоты

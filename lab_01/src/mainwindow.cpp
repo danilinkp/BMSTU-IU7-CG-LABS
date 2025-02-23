@@ -5,7 +5,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), scene(new QGraphicsScene) {
 	ui->setupUi(this);
 	setWindowTitle("1-ая лаба");
-	setFixedSize(1000, 750);
+	setFixedSize(1200, 750);
 
 	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -55,7 +55,7 @@ void MainWindow::show_result() {
 				.arg(triangle.get_b().get_y())
 				.arg(triangle.get_c().get_x())
 				.arg(triangle.get_c().get_y())
-				.arg(triangle.min_angle_hm());
+				.arg(std::acos(triangle.min_angle_hm()) * 180 / M_PI);
 
 			ui->answer_text_edit->setPlainText(result);
 		}
@@ -83,12 +83,27 @@ Triangle MainWindow::best_triangle() {
 void MainWindow::draw_result(const Triangle &triangle) {
 	scene->clear();
 
-	double min_x = std::min({triangle.get_a().get_x(), triangle.get_b().get_x(), triangle.get_c().get_x()});
-	double max_x = std::max({triangle.get_a().get_x(), triangle.get_b().get_x(), triangle.get_c().get_x()});
-	double min_y = std::min({triangle.get_a().get_y(), triangle.get_b().get_y(), triangle.get_c().get_y()});
-	double max_y = std::max({triangle.get_a().get_y(), triangle.get_b().get_y(), triangle.get_c().get_y()});
+	Point vertex, opposite1, opposite2;
+	triangle.get_points_for_min_angle(vertex, opposite1, opposite2);
 
-	double padding = (max_x - min_x) * 0.15;
+	Point M((opposite1.get_x() + opposite2.get_x()) / 2,
+			(opposite1.get_y() + opposite2.get_y()) / 2);
+
+	double a = opposite2.distance(opposite1);
+	double b = vertex.distance(opposite1);
+	double c = vertex.distance(opposite2);
+
+	double x = (b * b - c * c) / (2 * a) + a / 2;
+	double t = x / a;
+	Point H(opposite1.get_x() + t * (opposite2.get_x() - opposite1.get_x()),
+			opposite1.get_y() + t * (opposite2.get_y() - opposite1.get_y()));
+
+	double min_x = std::min({triangle.get_a().get_x(), triangle.get_b().get_x(), triangle.get_c().get_x(), H.get_x()});
+	double max_x = std::max({triangle.get_a().get_x(), triangle.get_b().get_x(), triangle.get_c().get_x(), H.get_x()});
+	double min_y = std::min({triangle.get_a().get_y(), triangle.get_b().get_y(), triangle.get_c().get_y(), H.get_y()});
+	double max_y = std::max({triangle.get_a().get_y(), triangle.get_b().get_y(), triangle.get_c().get_y(), H.get_y()});
+
+	double padding = (max_x - min_x) * 0.1;
 	min_x -= padding;
 	max_x += padding;
 	min_y -= padding;
@@ -119,24 +134,18 @@ void MainWindow::draw_result(const Triangle &triangle) {
 	QPen point_pen(Qt::red, point_size);
 	draw_points(triangle, point_size, point_pen);
 
-	set_point_text(triangle.get_a(), "A(%1; %2)", font, text_transform);
-	set_point_text(triangle.get_b(), "B(%1; %2)", font, text_transform);
-	set_point_text(triangle.get_c(), "C(%1; %2)", font, text_transform);
-
-	Point vertex, opposite1, opposite2;
-	triangle.get_points_for_min_angle(vertex, opposite1, opposite2);
-
-	Point M((opposite1.get_x() + opposite2.get_x()) / 2,
-			(opposite1.get_y() + opposite2.get_y()) / 2);
-
-	double a = opposite2.distance(opposite1);
-	double b = vertex.distance(opposite1);
-	double c = vertex.distance(opposite2);
-
-	double x = (b * b - c * c) / (2 * a) + a / 2;
-	double t = x / a;
-	Point H(opposite1.get_x() + t * (opposite2.get_x() - opposite1.get_x()),
-			opposite1.get_y() + t * (opposite2.get_y() - opposite1.get_y()));
+	set_point_text(triangle.get_a(),
+				   QString("%1(%2; %3)").arg(points.indexOf(triangle.get_a()) + 1),
+				   font,
+				   text_transform);
+	set_point_text(triangle.get_b(),
+				   QString("%1(%2; %3)").arg(points.indexOf(triangle.get_b()) + 1),
+				   font,
+				   text_transform);
+	set_point_text(triangle.get_c(),
+				   QString("%1(%2; %3)").arg(points.indexOf(triangle.get_c()) + 1),
+				   font,
+				   text_transform);
 
 	QPen median_pen(Qt::green, 2 / scale);
 	scene->addLine(vertex.get_x(), vertex.get_y(), M.get_x(), M.get_y(), median_pen);
@@ -150,7 +159,6 @@ void MainWindow::draw_result(const Triangle &triangle) {
 	set_point_text(M, "M(%1; %2)", font, text_transform);
 	set_point_text(H, "H(%1; %2)", font, text_transform);
 }
-
 
 void MainWindow::draw_triangle(const Triangle &triangle, const QPen &pen) {
 	scene->addLine(triangle.get_a().get_x(), triangle.get_a().get_y(),
@@ -183,9 +191,7 @@ void MainWindow::set_point_text(const Point &point, const QString &string,
 
 void MainWindow::read_table() {
 	points.clear();
-
 	for (int i = 0; i < ui->coords_table_widget->rowCount(); i++) {
-
 		Point p(ui->coords_table_widget->item(i, 0)->text().toDouble(),
 				ui->coords_table_widget->item(i, 1)->text().toDouble());
 		points.append(p);
@@ -202,21 +208,12 @@ void MainWindow::add_point() {
 	else {
 		int rows = ui->coords_table_widget->rowCount();
 		ui->coords_table_widget->insertRow(rows);
-		ui->coords_table_widget->setItem(rows, 0, new QTableWidgetItem(QString::number(x, 'f')));
-		ui->coords_table_widget->setItem(rows, 1, new QTableWidgetItem(QString::number(y, 'f')));
+		ui->coords_table_widget->setItem(rows, 0, new QTableWidgetItem(QString::number(x, 'g', 7)));
+		ui->coords_table_widget->setItem(rows, 1, new QTableWidgetItem(QString::number(y, 'g', 7)));
 
 		ui->answer_text_edit->setPlainText
 			("Точка (" + QString::number(x) + "; " + QString::number(y) + ") успешно добавлена.");
 	}
-}
-
-void MainWindow::remove_row_from_table(int row) {
-	QString x = ui->coords_table_widget->item(row, 0)->text();
-	QString y = ui->coords_table_widget->item(row, 1)->text();
-
-	ui->coords_table_widget->removeRow(row);
-
-	ui->answer_text_edit->setPlainText("Точка (" + x + "; " + y + ") успешно удалена.");
 }
 
 void MainWindow::del_point() {
@@ -244,6 +241,15 @@ void MainWindow::del_all_points() {
 			ui->coords_table_widget->removeRow(0);
 		ui->answer_text_edit->setPlainText("Все точки успешно удалены.");
 	}
+}
+
+void MainWindow::remove_row_from_table(int row) {
+	QString x = ui->coords_table_widget->item(row, 0)->text();
+	QString y = ui->coords_table_widget->item(row, 1)->text();
+
+	ui->coords_table_widget->removeRow(row);
+
+	ui->answer_text_edit->setPlainText("Точка (" + x + "; " + y + ") успешно удалена.");
 }
 
 void MainWindow::show_task() {

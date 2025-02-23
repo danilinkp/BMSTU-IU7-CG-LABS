@@ -15,6 +15,9 @@ public:
 	[[nodiscard]] double get_y() const;
 	[[maybe_unused]] void set_x(double x_);
 	[[maybe_unused]] void set_y(double y_);
+	bool operator==(const Point &other) const {
+		return x == other.x && y == other.y;
+	}
 
 	[[nodiscard]] double distance(const Point &other) const;
 };

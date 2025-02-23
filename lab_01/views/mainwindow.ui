@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>992</width>
-    <height>665</height>
+    <width>1013</width>
+    <height>690</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,6 +38,11 @@
    <layout class="QGridLayout" name="gridLayout_3">
     <item row="10" column="2">
      <widget class="QPushButton" name="answer_push_button">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Получить ответ</string>
       </property>
@@ -47,6 +52,11 @@
      <layout class="QGridLayout" name="gridLayout">
       <item row="2" column="2">
        <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Координата X:</string>
         </property>
@@ -54,6 +64,11 @@
       </item>
       <item row="4" column="2" colspan="2">
        <widget class="QPushButton" name="add_point_push_button">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Добавить точку</string>
         </property>
@@ -61,16 +76,32 @@
       </item>
       <item row="3" column="2">
        <widget class="QLineEdit" name="x_line_edit">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string/>
         </property>
        </widget>
       </item>
       <item row="3" column="3">
-       <widget class="QLineEdit" name="y_line_edit"/>
+       <widget class="QLineEdit" name="y_line_edit">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+       </widget>
       </item>
       <item row="1" column="2" colspan="2">
        <widget class="QTableWidget" name="coords_table_widget">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="rowCount">
          <number>0</number>
         </property>
@@ -81,16 +112,31 @@
          <property name="text">
           <string>X</string>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+          </font>
+         </property>
         </column>
         <column>
          <property name="text">
           <string>Y</string>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>14</pointsize>
+          </font>
          </property>
         </column>
        </widget>
       </item>
       <item row="2" column="3">
        <widget class="QLabel" name="label_2">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Координата Y:</string>
         </property>
@@ -102,6 +148,11 @@
      <layout class="QVBoxLayout" name="verticalLayout_3">
       <item>
        <widget class="QLabel" name="label_3">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Полученный ответ:</string>
         </property>
@@ -109,6 +160,11 @@
       </item>
       <item>
        <widget class="QPlainTextEdit" name="answer_text_edit">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="readOnly">
          <bool>true</bool>
         </property>
@@ -146,6 +202,11 @@
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="3" column="0" colspan="2">
        <widget class="QPushButton" name="del_all_points_push_button">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Удалить все точки</string>
         </property>
@@ -153,16 +214,32 @@
       </item>
       <item row="1" column="0" colspan="2">
        <widget class="QPushButton" name="del_point_push_button">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Удалить точку</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QSpinBox" name="point_spin_box"/>
+       <widget class="QSpinBox" name="point_spin_box">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+       </widget>
       </item>
       <item row="2" column="0" colspan="2">
        <widget class="QPushButton" name="del_last_point_push_button">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Удалить последнюю точку</string>
         </property>
@@ -170,6 +247,11 @@
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label_4">
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
         <property name="text">
          <string>Строка удаляемой точки:</string>
         </property>
@@ -189,6 +271,11 @@
     </item>
     <item row="0" column="2">
      <widget class="QPushButton" name="task_push_button">
+      <property name="font">
+       <font>
+        <pointsize>14</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Условие задачи</string>
       </property>
@@ -201,7 +288,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>992</width>
+     <width>1013</width>
      <height>23</height>
     </rect>
    </property>

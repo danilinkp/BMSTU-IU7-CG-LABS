@@ -50,7 +50,7 @@ double Triangle::angle_between_height_and_median(const Point &vertex, const Poin
 	if (cos_angle < -1)
 		cos_angle = -1;
 
-	return cos_angle;
+	return std::acos(cos_angle) * 180.0 / M_PI;
 }
 
 void Triangle::get_points_for_min_angle(Point &vertex, Point &opposite1, Point &opposite2) const {
@@ -58,11 +58,11 @@ void Triangle::get_points_for_min_angle(Point &vertex, Point &opposite1, Point &
 	double angle_b = angle_between_height_and_median(b, c, a);
 	double angle_c = angle_between_height_and_median(c, a, b);
 
-	if (angle_a >= angle_b && angle_a >= angle_c) {
+	if (angle_a <= angle_b && angle_a <= angle_c) {
 		vertex = a;
 		opposite1 = b;
 		opposite2 = c;
-	} else if (angle_b >= angle_a && angle_b >= angle_c) {
+	} else if (angle_b <= angle_a && angle_b <= angle_c) {
 		vertex = b;
 		opposite1 = c;
 		opposite2 = a;
@@ -78,7 +78,5 @@ double Triangle::min_angle_hm() const {
 	double angle_B = angle_between_height_and_median(b, a, c);
 	double angle_C = angle_between_height_and_median(c, a, b);
 
-//	std::cout << angle_A << " " << angle_B << " " << angle_C << std::endl;
-
-	return std::max({angle_A, angle_B, angle_C});
+	return std::min({angle_A, angle_B, angle_C});
 }

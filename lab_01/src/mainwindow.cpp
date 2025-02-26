@@ -5,7 +5,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), scene(new QGraphicsScene) {
 	ui->setupUi(this);
 	setWindowTitle("1-ая лаба");
-	setFixedSize(1200, 750);
+	setFixedSize(1350, 900);
 
 	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -55,7 +55,7 @@ void MainWindow::show_result() {
 				.arg(triangle.get_b().get_y())
 				.arg(triangle.get_c().get_x())
 				.arg(triangle.get_c().get_y())
-				.arg(std::acos(triangle.min_angle_hm()) * 180 / M_PI);
+				.arg(triangle.min_angle_hm());
 
 			ui->answer_text_edit->setPlainText(result);
 		}
@@ -253,8 +253,18 @@ void MainWindow::remove_row_from_table(int row) {
 }
 
 void MainWindow::show_task() {
-	QMessageBox::information(nullptr, "Условие задачи",
-							 "На плоскости дано множество точек.\n"
-							 "Найти треугольник с вершинами в этих точках, у которого угол, образованный высотой и медианной, "
-							 "исходящими из одной вершины, минимален");
+	QMessageBox msgBox;
+	msgBox.setWindowTitle("Условие задачи");
+
+	msgBox.setText("На плоскости дано множество точек.\n"
+				   "Найти треугольник с вершинами в этих точках, у которого угол, образованный высотой и медианой, "
+				   "исходящими из одной вершины, минимален");
+
+	QFont font = msgBox.font();
+	font.setPointSize(16);
+	msgBox.setFont(font);
+
+	msgBox.addButton(QMessageBox::Ok);
+
+	msgBox.exec();
 }

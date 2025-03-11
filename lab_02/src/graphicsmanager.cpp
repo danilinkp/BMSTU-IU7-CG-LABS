@@ -12,20 +12,20 @@ GraphicsManager::GraphicsManager(QObject *parent)
 	: QObject(parent), graphicsView(nullptr), scene(new QGraphicsScene(this))
 {}
 
-void GraphicsManager::setGraphicsView(QGraphicsView *view)
+void GraphicsManager::set_graphics_view(QGraphicsView *view)
 {
 	graphicsView = view;
 	graphicsView->setScene(scene);
 	graphicsView->setRenderHint(QPainter::Antialiasing);
 }
 
-void GraphicsManager::drawInitialFigure()
+void GraphicsManager::draw_initial_figure()
 {
 	scene->clear();
 	double a = 0, b = 0, c = 0, d = 0, r = 200;
 
-	setupParabola(a, c, d, r, parabola);
-	setupCircle(360, r, a, -b, circle);
+	setup_parabola(a, c, d, r, parabola);
+	setup_circle(720, r, a, -b, circle);
 	intersection = parabola.intersected(circle);
 
 	redraw();
@@ -33,7 +33,7 @@ void GraphicsManager::drawInitialFigure()
 	history.push({"initial", parabola, circle, intersection, 0, 0, 0, 0});
 }
 
-void GraphicsManager::setupParabola(double a, double c, double d, double r, QPolygonF &polygon)
+void GraphicsManager::setup_parabola(double a, double c, double d, double r, QPolygonF &polygon)
 {
 	polygon.clear();
 	double x = a + r + PARABOLA_MAX - 1;
@@ -46,7 +46,7 @@ void GraphicsManager::setupParabola(double a, double c, double d, double r, QPol
 	}
 }
 
-void GraphicsManager::setupCircle(double n, double r, double x_pos, double y_pos, QPolygonF &polygon)
+void GraphicsManager::setup_circle(double n, double r, double x_pos, double y_pos, QPolygonF &polygon)
 {
 	polygon.clear();
 	double w = 360.0 / n;
@@ -59,7 +59,7 @@ void GraphicsManager::setupCircle(double n, double r, double x_pos, double y_pos
 	}
 }
 
-QPolygonF GraphicsManager::rotatePolygon(const QPolygonF &polygon, double alpha, double rx, double ry)
+QPolygonF GraphicsManager::rotate_polygon(const QPolygonF &polygon, double alpha, double rx, double ry)
 {
 	QPolygonF result;
 	double cosA = cos(alpha * M_PI / 180.0);
@@ -76,7 +76,7 @@ QPolygonF GraphicsManager::rotatePolygon(const QPolygonF &polygon, double alpha,
 	return result;
 }
 
-QPolygonF GraphicsManager::scalePolygon(const QPolygonF &polygon, double kx, double ky, double cx, double cy)
+QPolygonF GraphicsManager::scale_polygon(const QPolygonF &polygon, double kx, double ky, double cx, double cy)
 {
 	QPolygonF result;
 
@@ -89,7 +89,7 @@ QPolygonF GraphicsManager::scalePolygon(const QPolygonF &polygon, double kx, dou
 	return result;
 }
 
-QPolygonF GraphicsManager::movePolygon(const QPolygonF &polygon, double x, double y)
+QPolygonF GraphicsManager::move_polygon(const QPolygonF &polygon, double x, double y)
 {
 	QPolygonF result;
 	for (const QPointF &point : polygon)
@@ -147,8 +147,8 @@ void GraphicsManager::redraw()
 void GraphicsManager::move(double dx, double dy)
 {
 	history.push({"move", parabola, circle, intersection, dx, dy, 0, 0});
-	parabola = movePolygon(parabola, dx, dy);
-	circle = movePolygon(circle, dx, dy);
+	parabola = move_polygon(parabola, dx, dy);
+	circle = move_polygon(circle, dx, dy);
 	intersection = parabola.intersected(circle);
 	redraw();
 }
@@ -156,8 +156,8 @@ void GraphicsManager::move(double dx, double dy)
 void GraphicsManager::scale(double kx, double ky, double cx, double cy)
 {
 	history.push({"scale", parabola, circle, intersection, kx, ky, cx, cy});
-	parabola = scalePolygon(parabola, kx, ky, cx, cy);
-	circle = scalePolygon(circle, kx, ky, cx, cy);
+	parabola = scale_polygon(parabola, kx, ky, cx, cy);
+	circle = scale_polygon(circle, kx, ky, cx, cy);
 	intersection = parabola.intersected(circle);
 	redraw();
 }
@@ -165,8 +165,8 @@ void GraphicsManager::scale(double kx, double ky, double cx, double cy)
 void GraphicsManager::rotate(double angle, double rx, double ry)
 {
 	history.push({"rotate", parabola, circle, intersection, angle, rx, ry, 0});
-	parabola = rotatePolygon(parabola, angle, rx, ry);
-	circle = rotatePolygon(circle, angle, rx, ry);
+	parabola = rotate_polygon(parabola, angle, rx, ry);
+	circle = rotate_polygon(circle, angle, rx, ry);
 	intersection = parabola.intersected(circle);
 	redraw();
 }
@@ -174,7 +174,7 @@ void GraphicsManager::rotate(double angle, double rx, double ry)
 void GraphicsManager::reset()
 {
 	history.clear();
-	drawInitialFigure();
+	draw_initial_figure();
 }
 
 void GraphicsManager::undo()
@@ -192,9 +192,7 @@ void GraphicsManager::undo()
 QPointF GraphicsManager::get_intersection_center()
 {
 	if (intersection.isEmpty())
-	{
 		return {0, 0};
-	}
 
 	qreal area = 0;
 	qreal cx = 0;

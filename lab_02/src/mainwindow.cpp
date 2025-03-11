@@ -11,8 +11,8 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-	graphicsManager->setGraphicsView(ui->graphics_view);
-	graphicsManager->drawInitialFigure();
+	graphicsManager->set_graphics_view(ui->graphics_view);
+	graphicsManager->draw_initial_figure();
 
 	show_center_figure();
 	auto validator = new QDoubleValidator;

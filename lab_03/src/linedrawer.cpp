@@ -197,113 +197,106 @@ QList<Pixel> LineDrawer::wu()
 	return wu(255);
 }
 
-// Поправить дублирование
+static double fpart(double x)
+{
+	return x - std::floor(x);
+}
+
+static double rfpart(double x)
+{
+	return 1.0 - fpart(x);
+}
+
 QList<Pixel> LineDrawer::wu(int max_intensity)
 {
 	QList<Pixel> points;
 
 	if (start.x() == end.x() && start.y() == end.y())
 	{
-		points.push_back(Pixel(start));
+		points.push_back(Pixel(start, max_intensity));
 		return points;
 	}
 
-	double dx = end.x() - start.x();
-	double dy = end.y() - start.y();
+	bool steep = std::abs(end.y() - start.y()) > std::abs(end.x() - start.x());
 
-	int sign_x = sign(dx);
-	int sign_y = sign(dy);
+	double x0 = start.x();
+	double y0 = start.y();
+	double x1 = end.x();
+	double y1 = end.y();
 
-	dx = abs(dx);
-	dy = abs(dy);
-
-	bool swapped = false;
-	if (dy > dx)
+	if (steep)
 	{
-		std::swap(dx, dy);
-		swapped = true;
+		std::swap(x0, y0);
+		std::swap(x1, y1);
 	}
 
-	double gradient = (dx == 0) ? 1.0 : dy / dx;
-
-	int x = start.x();
-	int y = start.y();
-
-	// Первая точка
-	double yend = y + gradient * 0.5;  // Смещение на половину пикселя
-	double xgap = 1.0 - fmod(start.x() + 0.5, 1.0);
-	int ypxl = floor(yend);
-
-
-
-	if (swapped)
+	if (x0 > x1)
 	{
-		points.push_back(Pixel(QPoint(ypxl, x), static_cast<int>(max_intensity * (1.0 - (yend - ypxl)) * xgap)));
-		points.push_back(Pixel(QPoint(ypxl + 1, x), static_cast<int>((max_intensity * (yend - ypxl) * xgap))));
+		std::swap(x0, x1);
+		std::swap(y0, y1);
+	}
+
+	double dx = x1 - x0;
+	double dy = y1 - y0;
+	double gradient = (dx < 1e-10) ? 1.0 : dy / dx;
+
+	double xend = std::round(x0);
+	double yend = y0 + gradient * (xend - x0);
+	double xgap = rfpart(x0 + 0.5);
+	int xpxl1 = static_cast<int>(xend);
+	int ypxl1 = static_cast<int>(std::floor(yend));
+
+	if (steep)
+	{
+		points.push_back(Pixel(QPoint(ypxl1, xpxl1), static_cast<int>(rfpart(yend) * xgap * max_intensity)));
+		points.push_back(Pixel(QPoint(ypxl1 + 1, xpxl1), static_cast<int>(fpart(yend) * xgap * max_intensity)));
 	}
 	else
 	{
-		points.push_back(Pixel(QPoint(x, ypxl), static_cast<int>(max_intensity * (1.0 - (yend - ypxl)) * xgap)));
-		points.push_back(Pixel(QPoint(x, ypxl + 1), static_cast<int>(max_intensity * (yend - ypxl) * xgap)));
+		points.push_back(Pixel(QPoint(xpxl1, ypxl1), static_cast<int>(rfpart(yend) * xgap * max_intensity)));
+		points.push_back(Pixel(QPoint(xpxl1, ypxl1 + 1), static_cast<int>(fpart(yend) * xgap * max_intensity)));
 	}
 
-	double intery = yend;
-	int x_end = end.x();
-	int y_end = end.y();
+	// Основной цикл
+	double intery = yend + gradient;
+	xend = std::round(x1);
+	int xpxl2 = static_cast<int>(xend);
 
-	if (swapped)
+	if (steep)
 	{
-		while (y != y_end || x != x_end)
+		for (int x = xpxl1 + 1; x < xpxl2; x++)
 		{
-			y += sign_y;
+			int ypxl = static_cast<int>(std::floor(intery));
+			points.push_back(Pixel(QPoint(ypxl, x), static_cast<int>(rfpart(intery) * max_intensity)));
+			points.push_back(Pixel(QPoint(ypxl + 1, x), static_cast<int>(fpart(intery) * max_intensity)));
 			intery += gradient;
-			int xpxl = floor(intery);
-			double fraction = intery - xpxl;
-
-			points.push_back(Pixel(QPoint(xpxl, y), static_cast<int>(max_intensity * (1.0 - fraction))));
-			points.push_back(Pixel(QPoint(xpxl + 1, y), static_cast<int>(max_intensity * fraction)));
-
-			if (fraction >= 1.0)
-			{
-				x += sign_x;
-				intery -= 1.0;
-			}
 		}
 	}
 	else
 	{
-		while (x != x_end || y != y_end)
+		for (int x = xpxl1 + 1; x < xpxl2; x++)
 		{
-			x += sign_x;
+			int ypxl = static_cast<int>(std::floor(intery));
+			points.push_back(Pixel(QPoint(x, ypxl), static_cast<int>(rfpart(intery) * max_intensity)));
+			points.push_back(Pixel(QPoint(x, ypxl + 1), static_cast<int>(fpart(intery) * max_intensity)));
 			intery += gradient;
-			ypxl = floor(intery);
-			double fraction = intery - ypxl;
-
-			points.push_back(Pixel(QPoint(x, ypxl), static_cast<int>(max_intensity * (1.0 - fraction))));
-			points.push_back(Pixel(QPoint(x, ypxl + 1), static_cast<int>(max_intensity * fraction)));
-
-			if (fraction >= 1.0)
-			{
-				y += sign_y;
-				intery -= 1.0;
-			}
 		}
 	}
 
-	// Последняя точка
-	yend = end.y() + gradient * 0.5;
-	xgap = fmod(end.x() + 0.5, 1.0);
-	ypxl = floor(yend);
+	// Обработка последней точки
+	yend = y1 + gradient * (xend - x1);
+	xgap = fpart(x1 + 0.5);
+	int ypxl2 = static_cast<int>(std::floor(yend));
 
-	if (swapped)
+	if (steep)
 	{
-		points.push_back(Pixel(QPoint(ypxl, end.x()), max_intensity * (1.0 - (yend - ypxl)) * xgap));
-		points.push_back(Pixel(QPoint(ypxl + 1, end.x()), max_intensity * (yend - ypxl) * xgap));
+		points.push_back(Pixel(QPoint(ypxl2, xpxl2), static_cast<int>(rfpart(yend) * xgap * max_intensity)));
+		points.push_back(Pixel(QPoint(ypxl2 + 1, xpxl2), static_cast<int>(fpart(yend) * xgap * max_intensity)));
 	}
 	else
 	{
-		points.push_back(Pixel(QPoint(end.x(), ypxl), max_intensity * (1.0 - (yend - ypxl)) * xgap));
-		points.push_back(Pixel(QPoint(end.x(), ypxl + 1), max_intensity * (yend - ypxl) * xgap));
+		points.push_back(Pixel(QPoint(xpxl2, ypxl2), static_cast<int>(rfpart(yend) * xgap * max_intensity)));
+		points.push_back(Pixel(QPoint(xpxl2, ypxl2 + 1), static_cast<int>(fpart(yend) * xgap * max_intensity)));
 	}
 
 	return points;
@@ -316,4 +309,28 @@ int LineDrawer::sign(double value)
 	else if (value > 0)
 		return 1;
 	return 0;
+}
+
+static long delta_time(struct timespec mt1, struct timespec mt2)
+{
+	return 1000000000 * (mt2.tv_sec - mt1.tv_sec) + (mt2.tv_nsec - mt1.tv_nsec);
+}
+
+double LineDrawer::time_measurement(QList<Pixel> (LineDrawer::*algorithm)())
+{
+	int ITER_COUNT_TIME = 150;
+	long time1;
+	double sum = 0;
+	struct timespec tbegin, tend;
+
+	for (size_t i = 0; i < ITER_COUNT_TIME; i++)
+	{
+		clock_gettime(CLOCK_REALTIME, &tbegin);
+		(this->*algorithm)();
+		clock_gettime(CLOCK_REALTIME, &tend);
+		sum += delta_time(tbegin, tend);
+	}
+
+	return sum / ITER_COUNT_TIME;
+
 }

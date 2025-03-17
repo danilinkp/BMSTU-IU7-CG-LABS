@@ -31,6 +31,7 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        Charts
         REQUIRED)
 
 add_executable(${PROJECT_NAME}
@@ -43,4 +44,5 @@ target_link_libraries(lab_03
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::Charts
 )

@@ -16,6 +16,16 @@ public:
 	Pixel(QPoint point, int intensity)
 		: point(point), intensity(intensity)
 	{};
+
+	[[nodiscard]] int get_intensity() const
+	{
+		return intensity;
+	}
+
+	[[nodiscard]] QPoint get_point() const
+	{
+		return point;
+	}
 };
 
 class LineDrawer
@@ -34,6 +44,7 @@ public:
 	QList<Pixel> bresenham_smooth(int max_intensity);
 	QList<Pixel> wu();
 	QList<Pixel> wu(int max_intensity);
+	double time_measurement(QList<Pixel> (LineDrawer::*algorithm)());
 
 private:
 	static int sign(double value);

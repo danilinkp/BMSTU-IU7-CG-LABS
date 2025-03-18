@@ -45,6 +45,7 @@ public:
 	QList<Pixel> wu();
 	QList<Pixel> wu(int max_intensity);
 	double time_measurement(QList<Pixel> (LineDrawer::*algorithm)());
+	int get_step_count(QList<Pixel> (LineDrawer::*algorithm)());
 
 private:
 	static int sign(double value);

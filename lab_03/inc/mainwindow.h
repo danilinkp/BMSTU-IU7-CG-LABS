@@ -27,7 +27,11 @@ private slots:
 	void on_draw_line_btn_clicked();
 	void on_draw_spectre_btn_clicked();
 	void on_time_cmp_btn_clicked();
+	void on_step_cmp_btn_clicked();
 	void on_back_btn_clicked();
+	void on_back_btn_2_clicked();
+	void on_time_measurement_btn_clicked();
+
 private:
 	Ui::MainWindow *ui;
 	QGraphicsScene *scene;

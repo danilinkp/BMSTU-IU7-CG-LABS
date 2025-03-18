@@ -1,5 +1,7 @@
 #include "linedrawer.h"
 #include <cmath>
+#include <ranges>
+#include <iostream>
 
 LineDrawer::LineDrawer(QPoint first, QPoint second)
 {
@@ -283,7 +285,6 @@ QList<Pixel> LineDrawer::wu(int max_intensity)
 		}
 	}
 
-	// Обработка последней точки
 	yend = y1 + gradient * (xend - x1);
 	xgap = fpart(x1 + 0.5);
 	int ypxl2 = static_cast<int>(std::floor(yend));
@@ -319,18 +320,48 @@ static long delta_time(struct timespec mt1, struct timespec mt2)
 double LineDrawer::time_measurement(QList<Pixel> (LineDrawer::*algorithm)())
 {
 	int ITER_COUNT_TIME = 150;
-	long time1;
 	double sum = 0;
-	struct timespec tbegin, tend;
+	struct timespec tbegin{}, tend{};
 
 	for (size_t i = 0; i < ITER_COUNT_TIME; i++)
 	{
 		clock_gettime(CLOCK_REALTIME, &tbegin);
 		(this->*algorithm)();
 		clock_gettime(CLOCK_REALTIME, &tend);
-		sum += delta_time(tbegin, tend);
+		sum += static_cast<double>(delta_time(tbegin, tend));
 	}
 
 	return sum / ITER_COUNT_TIME;
+}
 
+void print_pixel(const Pixel &pixel)
+{
+	std::cout << "(" << pixel.get_point().x() << "; " << pixel.get_point().y() << ") " << pixel.get_intensity() << " ";
+}
+
+int LineDrawer::get_step_count(QList<Pixel> (LineDrawer::*algorithm)())
+{
+	auto pixels = (this->*algorithm)();
+	if (pixels.size() < 2)
+		return 0;
+	if (algorithm == static_cast<QList<Pixel> (LineDrawer::*)()>(&LineDrawer::wu))
+	{
+		auto filtered = pixels | std::ranges::views::filter([&](const Pixel &p)
+															{
+																return p.get_intensity() >= 128;
+															}) | std::ranges::to<QList>();
+		pixels = filtered;
+	}
+
+	int count = 0;
+	QPoint prevPoint = pixels.first().get_point();
+	for (auto pixel : pixels)
+	{
+		if (qAbs(pixel.get_point().x() - prevPoint.x()) >= 1 && qAbs(pixel.get_point().y() - prevPoint.y()) >= 1)
+			count++;
+		if (prevPoint.x() != pixel.get_point().x() || prevPoint.y() != pixel.get_point().y())
+			prevPoint = pixel.get_point();
+	}
+
+	return count;
 }

@@ -177,6 +177,9 @@ void MainWindow::show_err_msg(const QString &msg)
 void MainWindow::on_time_cmp_btn_clicked()
 {
 	ui->stackedWidget->setCurrentIndex(1);
+	auto* empty = new QLabel("", this);
+
+	ui->time_layout->addWidget(empty);
 }
 
 void MainWindow::on_time_measurement_btn_clicked()

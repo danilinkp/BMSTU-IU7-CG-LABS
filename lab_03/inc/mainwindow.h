@@ -46,6 +46,7 @@ private:
 	void draw_line(const QColor &color, const QPoint &start, const QPoint &end);
 	void add_line_to_scene();
 	void draw_line(QColor color, const QList<Pixel> &line);
+	double library_algorithm_time(const QPoint &start, const QPoint &end);
 };
 
 #endif // MAINWINDOW_H

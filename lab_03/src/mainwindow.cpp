@@ -95,15 +95,16 @@ void MainWindow::on_draw_spectre_btn_clicked()
 {
 	bool angle_ok, radius_ok;
 	double angle = ui->angle_edit->text().toDouble(&angle_ok);
+	angle = static_cast<int>(angle) % 360;
 	double radius = ui->radius_edit->text().toDouble(&radius_ok);
 
-	if (angle_ok && radius_ok)
+	if (angle_ok && radius_ok && angle != 0)
 	{
 		QString algorithm = ui->algorithm_box->currentText();
 
 		QPoint start(static_cast<int>(round(scene->width() / 2)), static_cast<int>(round(scene->height() / 2)));
 
-		for (int i = 0; i < 360; i += static_cast<int>(angle))
+		for (int i = 0; i < 360; i += angle)
 		{
 			QPoint end(static_cast<int>(round(start.x() + radius * cos(M_PI / 180 * i))),
 					   static_cast<int>(round(start.y() + radius * sin((M_PI / 180) * i * -1))));
@@ -121,7 +122,7 @@ void MainWindow::draw_line_by_algorithm(const QString &algorithm, QPoint start, 
 		draw_line(line_color, start, end);
 	else
 	{
-		QList<Pixel> line;
+		QList < Pixel > line;
 		if (algorithm == "ЦДА")
 			line = LineDrawer(start, end).dda();
 		else if (algorithm == "Брезенхем (int)")
@@ -177,9 +178,32 @@ void MainWindow::show_err_msg(const QString &msg)
 void MainWindow::on_time_cmp_btn_clicked()
 {
 	ui->stackedWidget->setCurrentIndex(1);
-	auto* empty = new QLabel("", this);
+	auto *empty = new QLabel("", this);
 
 	ui->time_layout->addWidget(empty);
+}
+
+static long delta_time(struct timespec mt1, struct timespec mt2)
+{
+	return 1000000000 * (mt2.tv_sec - mt1.tv_sec) + (mt2.tv_nsec - mt1.tv_nsec);
+}
+
+
+double MainWindow::library_algorithm_time(const QPoint &start, const QPoint &end)
+{
+	int ITER_COUNT_TIME = 150;
+	double sum = 0;
+	struct timespec tbegin{}, tend{};
+
+	for (size_t i = 0; i < ITER_COUNT_TIME; i++)
+	{
+		clock_gettime(CLOCK_REALTIME, &tbegin);
+		draw_line_by_algorithm("Библиотечная функция", start, end);
+		clock_gettime(CLOCK_REALTIME, &tend);
+		sum += static_cast<double>(delta_time(tbegin, tend));
+	}
+
+	return sum / ITER_COUNT_TIME;
 }
 
 void MainWindow::on_time_measurement_btn_clicked()
@@ -205,18 +229,21 @@ void MainWindow::on_time_measurement_btn_clicked()
 	times.push_back(line.time_measurement(&LineDrawer::bresenham_int));
 	times.push_back(line.time_measurement(&LineDrawer::bresenham_smooth));
 	times.push_back(line.time_measurement(&LineDrawer::wu));
+	times.push_back(library_algorithm_time(start, end));
 
 
-	QLayoutItem *item;
+	QLayoutItem * item;
 	while ((item = ui->time_layout->takeAt(0)))
 		delete item;
 
 
 	auto set0 = new QBarSet("ЦДА");
+	set0->setColor(QColor("black"));
 	auto set1 = new QBarSet("Брезенхем");
 	auto set2 = new QBarSet("Брезенхем целочисленный");
 	auto set3 = new QBarSet("Брезенхем со сглаживанием");
 	auto set4 = new QBarSet("Ву");
+	auto set5 = new QBarSet("Библиотечная");
 
 	double min_y = 0, max_y = (double)*max_element(times.begin(), times.end());
 
@@ -225,6 +252,7 @@ void MainWindow::on_time_measurement_btn_clicked()
 	*set2 << times[2];
 	*set3 << times[3];
 	*set4 << times[4];
+	*set5 << times[5];
 
 	auto *series = new QBarSeries;
 	series->append(set0);
@@ -232,6 +260,7 @@ void MainWindow::on_time_measurement_btn_clicked()
 	series->append(set2);
 	series->append(set3);
 	series->append(set4);
+	series->append(set5);
 
 	auto chart = new QChart;
 	chart->addSeries(series);
@@ -245,7 +274,7 @@ void MainWindow::on_time_measurement_btn_clicked()
 	series->attachAxis(axisY);
 
 	chart->legend()->setVisible(true);
-	chart->legend()->setAlignment(Qt::AlignBottom);
+	chart->legend()->setAlignment(Qt::AlignTop);
 
 	auto *chartView = new QChartView(chart);
 	chartView->setRenderHint(QPainter::Antialiasing);
@@ -282,7 +311,7 @@ void MainWindow::on_step_cmp_btn_clicked()
 		wu_steps.push_back(line.get_step_count(&LineDrawer::wu));
 	}
 
-	QLayoutItem *item;
+	QLayoutItem * item;
 	while ((item = ui->time_layout->takeAt(0)))
 		delete item;
 
@@ -349,7 +378,8 @@ void MainWindow::on_step_cmp_btn_clicked()
 	auto *combined_view = new QChartView(combined_chart);
 	combined_view->setRenderHint(QPainter::Antialiasing);
 
-	auto create_chart = [&](const QString &title, const std::vector<int> &steps) {
+	auto create_chart = [&](const QString &title, const std::vector<int> &steps)
+	{
 		auto *chart = new QChart();
 
 		auto *series = new QLineSeries();
@@ -377,11 +407,11 @@ void MainWindow::on_step_cmp_btn_clicked()
 		return view;
 	};
 
-	QChartView *dda_view = create_chart("ЦДА", dda_steps);
-	QChartView *bresenham_view = create_chart("Брезенхем с действительными коэффициетнами", bresenham_steps);
-	QChartView *bresenham_float_view = create_chart("Брезенхем с целыми коэффициетнами", bresenham_int_steps);
-	QChartView *bresenham_smooth_view = create_chart("Брезенхем с устранением ступенчатости", bresenham_smooth_steps);
-	QChartView *wu_view = create_chart("Ву", wu_steps);
+	QChartView * dda_view = create_chart("ЦДА", dda_steps);
+	QChartView * bresenham_view = create_chart("Брезенхем с действительными коэффициетнами", bresenham_steps);
+	QChartView * bresenham_float_view = create_chart("Брезенхем с целыми коэффициетнами", bresenham_int_steps);
+	QChartView * bresenham_smooth_view = create_chart("Брезенхем с устранением ступенчатости", bresenham_smooth_steps);
+	QChartView * wu_view = create_chart("Ву", wu_steps);
 
 	ui->step_layout->setRowStretch(0, 1);
 	ui->step_layout->setRowStretch(1, 1);
@@ -396,7 +426,6 @@ void MainWindow::on_step_cmp_btn_clicked()
 	ui->step_layout->addWidget(bresenham_smooth_view, 1, 1);
 	ui->step_layout->addWidget(wu_view, 1, 2);
 }
-
 
 void MainWindow::on_back_btn_clicked()
 {

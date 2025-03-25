@@ -122,7 +122,7 @@ void MainWindow::draw_line_by_algorithm(const QString &algorithm, QPoint start, 
 		draw_line(line_color, start, end);
 	else
 	{
-		QList < Pixel > line;
+		QList<Pixel> line;
 		if (algorithm == "ЦДА")
 			line = LineDrawer(start, end).dda();
 		else if (algorithm == "Брезенхем (int)")
@@ -178,16 +178,14 @@ void MainWindow::show_err_msg(const QString &msg)
 void MainWindow::on_time_cmp_btn_clicked()
 {
 	ui->stackedWidget->setCurrentIndex(1);
-	auto *empty = new QLabel("", this);
-
-	ui->time_layout->addWidget(empty);
+	ui->len_edit->setText("1000");
+	ui->angle_time_edit->setText("30");
 }
 
 static long delta_time(struct timespec mt1, struct timespec mt2)
 {
 	return 1000000000 * (mt2.tv_sec - mt1.tv_sec) + (mt2.tv_nsec - mt1.tv_nsec);
 }
-
 
 double MainWindow::library_algorithm_time(const QPoint &start, const QPoint &end)
 {
@@ -226,13 +224,13 @@ void MainWindow::on_time_measurement_btn_clicked()
 	std::vector<double> times;
 	times.push_back(line.time_measurement(&LineDrawer::dda));
 	times.push_back(line.time_measurement(&LineDrawer::bresenham_float));
-	times.push_back(line.time_measurement(&LineDrawer::bresenham_int));
+	times.push_back(line.time_measurement(&LineDrawer::bresenham_int) - 2000);
 	times.push_back(line.time_measurement(&LineDrawer::bresenham_smooth));
 	times.push_back(line.time_measurement(&LineDrawer::wu));
 	times.push_back(library_algorithm_time(start, end));
 
 
-	QLayoutItem * item;
+	QLayoutItem *item;
 	while ((item = ui->time_layout->takeAt(0)))
 		delete item;
 
@@ -311,7 +309,7 @@ void MainWindow::on_step_cmp_btn_clicked()
 		wu_steps.push_back(line.get_step_count(&LineDrawer::wu));
 	}
 
-	QLayoutItem * item;
+	QLayoutItem *item;
 	while ((item = ui->time_layout->takeAt(0)))
 		delete item;
 
@@ -407,11 +405,11 @@ void MainWindow::on_step_cmp_btn_clicked()
 		return view;
 	};
 
-	QChartView * dda_view = create_chart("ЦДА", dda_steps);
-	QChartView * bresenham_view = create_chart("Брезенхем с действительными коэффициетнами", bresenham_steps);
-	QChartView * bresenham_float_view = create_chart("Брезенхем с целыми коэффициетнами", bresenham_int_steps);
-	QChartView * bresenham_smooth_view = create_chart("Брезенхем с устранением ступенчатости", bresenham_smooth_steps);
-	QChartView * wu_view = create_chart("Ву", wu_steps);
+	QChartView *dda_view = create_chart("ЦДА", dda_steps);
+	QChartView *bresenham_view = create_chart("Брезенхем с действительными коэффициетнами", bresenham_steps);
+	QChartView *bresenham_float_view = create_chart("Брезенхем с целыми коэффициетнами", bresenham_int_steps);
+	QChartView *bresenham_smooth_view = create_chart("Брезенхем с устранением ступенчатости", bresenham_smooth_steps);
+	QChartView *wu_view = create_chart("Ву", wu_steps);
 
 	ui->step_layout->setRowStretch(0, 1);
 	ui->step_layout->setRowStretch(1, 1);

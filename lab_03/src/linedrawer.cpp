@@ -2,6 +2,7 @@
 #include <cmath>
 #include <ranges>
 #include <iostream>
+#include "chrono"
 
 LineDrawer::LineDrawer(QPoint first, QPoint second)
 {
@@ -312,23 +313,17 @@ int LineDrawer::sign(double value)
 	return 0;
 }
 
-static long delta_time(struct timespec mt1, struct timespec mt2)
-{
-	return 1000000000 * (mt2.tv_sec - mt1.tv_sec) + (mt2.tv_nsec - mt1.tv_nsec);
-}
-
 double LineDrawer::time_measurement(QList<Pixel> (LineDrawer::*algorithm)())
 {
-	int ITER_COUNT_TIME = 150;
+	int ITER_COUNT_TIME = 500;
 	double sum = 0;
-	struct timespec tbegin{}, tend{};
 
 	for (size_t i = 0; i < ITER_COUNT_TIME; i++)
 	{
-		clock_gettime(CLOCK_REALTIME, &tbegin);
+		auto tbegin = std::chrono::high_resolution_clock::now();
 		(this->*algorithm)();
-		clock_gettime(CLOCK_REALTIME, &tend);
-		sum += static_cast<double>(delta_time(tbegin, tend));
+		auto tend = std::chrono::high_resolution_clock::now();
+		sum += std::chrono::duration<double, std::nano>(tend - tbegin).count();
 	}
 
 	return sum / ITER_COUNT_TIME;

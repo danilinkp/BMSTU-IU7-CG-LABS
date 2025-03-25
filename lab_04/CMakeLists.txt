@@ -21,10 +21,12 @@ set(SOURCES
 set(HEADERS
         inc/mainwindow.h
         inc/circledrawer.h
+        inc/ellipsedrawer.h
 )
 
 set(UI_FILES
         forms/mainwindow.ui
+        src/ellipsedrawer.cpp
 )
 
 find_package(Qt6 COMPONENTS

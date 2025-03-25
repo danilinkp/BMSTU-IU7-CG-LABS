@@ -1,24 +1,27 @@
-#ifndef CIRCLEDRAWER_H
-#define CIRCLEDRAWER_H
+#ifndef ELLIPSEDRAWER_H
+#define ELLIPSEDRAWER_H
+
 
 #include <QPoint>
 #include <QList>
 
-class CircleDrawer
+class EllipseDrawer
 {
 private:
 	QPoint center;
-	int radius;
+	int rx;
+	int ry;
 
 public:
-	CircleDrawer(QPoint center, int radius);
+	EllipseDrawer(QPoint center, int rx, int ry);
 	QList<QPoint> canonical();
 	QList<QPoint> parametric();
 	QList<QPoint> bresenham();
 	QList<QPoint> middle_point();
-	double time_measurement(QList<QPoint> (CircleDrawer::*algorithm)());
+	double time_measurement(QList<QPoint> (EllipseDrawer::*algorithm)());
 private:
 	void put_symmetrical_points(QList<QPoint> &points, int x, int y);
 };
 
-#endif //CIRCLEDRAWER_H
+
+#endif //ELLIPSEDRAWER_H

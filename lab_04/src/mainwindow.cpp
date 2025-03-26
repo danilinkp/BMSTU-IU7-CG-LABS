@@ -211,8 +211,9 @@ void MainWindow::on_draw_ellipse_spectra_btn_clicked()
 	{
 		QString algorithm = ui->algorithm_box->currentText();
 		QPoint center(x_center, y_center);
+		int step_y = static_cast<int>(round(static_cast<double>(step) * start_ry / start_rx));
 		for (int i = 0; i < num; i++)
-			draw_ellipse_by_algorithm(algorithm, center, start_rx + i * step, start_ry + i * step);
+			draw_ellipse_by_algorithm(algorithm, center, start_rx + i * step, start_ry + i * step_y);
 	}
 	else
 		show_err_msg("Ошибка ввода параметров");

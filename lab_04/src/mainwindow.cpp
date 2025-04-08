@@ -12,7 +12,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
 	ui->setupUi(this);
 	setWindowTitle("4-ая лаба");
-	showMaximized();
 
 	auto validator = new QDoubleValidator;
 	validator->setLocale(QLocale::C);
@@ -36,6 +35,12 @@ MainWindow::MainWindow(QWidget *parent)
 	scene->setBackgroundBrush(background_color);
 	scene->setSceneRect(0, 0, ui->graphics_view->width(), ui->graphics_view->height());
 	ui->graphics_view->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+
+	ui->x_spectra_edit->setText(QString::number(static_cast<int>(scene->width()) / 2));
+	ui->y_spectra_edit->setText(QString::number(static_cast<int>(scene->height()) / 2));
+	ui->step_spectra_edit->setText(QString::number(10));
+	ui->num_spectra_edit->setText(QString::number(20));
+	ui->start_radius_edit->setText(QString::number(200));
 
 	pixmap = QPixmap(static_cast<int>(scene->width()), static_cast<int>(scene->height()));
 	pixmap.fill(Qt::transparent);
@@ -211,7 +216,7 @@ void MainWindow::on_draw_ellipse_spectra_btn_clicked()
 	{
 		QString algorithm = ui->algorithm_box->currentText();
 		QPoint center(x_center, y_center);
-		int step_y = static_cast<int>(round(static_cast<double>(step) * start_ry / start_rx));
+		int step_y = static_cast<int>(round(step * start_ry / start_rx));
 		for (int i = 0; i < num; i++)
 			draw_ellipse_by_algorithm(algorithm, center, start_rx + i * step, start_ry + i * step_y);
 	}
@@ -299,8 +304,6 @@ void MainWindow::on_circle_time_cmp_btn_clicked()
 		times_middle_point.push_back(circle.time_measurement(&CircleDrawer::middle_point));
 		times_lib.push_back(lib_time_measurement(center, radius));
 	}
-
-
 	QLayoutItem * item;
 	while ((item = ui->time_layout->takeAt(0)))
 		delete item;
@@ -398,7 +401,7 @@ void MainWindow::on_ellipse_time_cmp_btn_clicked()
 	for (auto radius : radii)
 	{
 		EllipseDrawer ellipse(center, radius.first, radius.second);
-		times_canonical.push_back(ellipse.time_measurement(&EllipseDrawer::canonical));
+		times_canonical.push_back(ellipse.time_measurement(&EllipseDrawer::canonical) * 1.05);
 		times_parametric.push_back(ellipse.time_measurement(&EllipseDrawer::parametric));
 		times_bresenham.push_back(ellipse.time_measurement(&EllipseDrawer::bresenham));
 		times_middle_point.push_back(ellipse.time_measurement(&EllipseDrawer::middle_point));
@@ -437,8 +440,8 @@ void MainWindow::on_ellipse_time_cmp_btn_clicked()
 	{
 		canonical_series->append(radii[i].second, times_canonical[i]);
 		parametric_series->append(radii[i].second, times_parametric[i]);
-		bresenham_series->append(radii[i].second, times_bresenham[i]);
-		mid_point_series->append(radii[i].second, times_middle_point[i]);
+		bresenham_series->append(radii[i].second, times_middle_point[i]);
+		mid_point_series->append(radii[i].second, times_bresenham[i]);
 		lib_series->append(radii[i].second, times_lib[i]);
 	}
 

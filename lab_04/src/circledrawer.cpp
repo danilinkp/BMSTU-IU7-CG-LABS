@@ -36,17 +36,15 @@ QList<QPoint> CircleDrawer::canonical()
 QList<QPoint> CircleDrawer::parametric()
 {
 	QList<QPoint> points;
-
 	double step = 1.0 / radius;
-	double maxAngle = M_PI / 4;
-	for (double t = 0; t <= maxAngle; t += step)
+	double max_angle = M_PI / 4;
+	for (double t = 0; t < max_angle + step; t += step)
 	{
-		int x = static_cast<int>(radius * cos(t));
-		int y = static_cast<int>(radius * sin(t));
+		int x = static_cast<int>(round(radius * cos(t)));
+		int y = static_cast<int>(round(radius * sin(t)));
 
 		put_symmetrical_points(points, x, y);
 	}
-
 	return points;
 }
 
@@ -57,6 +55,7 @@ QList<QPoint> CircleDrawer::bresenham()
 	int x = 0;
 	int y = radius;
 	int delta = 2 * (1 - radius);
+
 	put_symmetrical_points(points, x, y);
 	while (x <= y)
 	{
@@ -71,6 +70,7 @@ QList<QPoint> CircleDrawer::bresenham()
 		}
 		put_symmetrical_points(points, x, y);
 	}
+
 	return points;
 }
 
@@ -85,7 +85,6 @@ QList<QPoint> CircleDrawer::middle_point()
 	while (x >= y)
 	{
 		y++;
-
 		if (parameter < 0)
 			parameter += 2 * y + 1;
 		else

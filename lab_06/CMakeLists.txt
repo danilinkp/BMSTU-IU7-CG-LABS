@@ -6,17 +6,43 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${PROJECT_SOURCE_DIR}/forms/)
+
+include_directories(${PROJECT_SOURCE_DIR}/inc/)
+
+set(SOURCES
+        src/main.cpp
+        src/mainwindow.cpp
+        src/figure.cpp
+        src/drawer.cpp
+        src/scanline_seed_fill.cpp
+)
+set(HEADERS
+        inc/mainwindow.h
+        inc/figure.h
+        inc/drawer.h
+        inc/scanline_seed_fill.h
+)
+
+set(UI_FILES
+        forms/mainwindow.ui
+)
 
 find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        Charts
         REQUIRED)
 
-add_executable(lab_06 main.cpp)
+add_executable(${PROJECT_NAME}
+        ${SOURCES}
+        ${HEADERS}
+        ${UI_FILES}
+)
+
 target_link_libraries(lab_06
         Qt::Core
         Qt::Gui
         Qt::Widgets
 )
-

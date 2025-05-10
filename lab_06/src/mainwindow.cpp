@@ -5,6 +5,7 @@
 #include <QColorDialog>
 #include <QDoubleValidator>
 #include <QMessageBox>
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
@@ -26,7 +27,7 @@ MainWindow::MainWindow(QWidget *parent)
 	scene->setSceneRect(0, 0, ui->graphics_view->width(), ui->graphics_view->height());
 	ui->graphics_view->setAlignment(Qt::AlignLeft | Qt::AlignTop);
 
-	pixmap = QPixmap(static_cast<int>(scene->width()), static_cast<int>(scene->height()));
+	pixmap = QPixmap(static_cast<int>(scene->width()), static_cast<int>(scene->height()) + 20);
 	pixmap.fill(Qt::transparent);
 	scene->addPixmap(pixmap);
 

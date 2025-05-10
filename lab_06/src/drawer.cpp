@@ -68,7 +68,7 @@ size_t Drawer::get_pixmap_height()
 
 void Drawer::clear()
 {
-	this->pixmap = QPixmap(scene->width(), scene->height());
+	this->pixmap = QPixmap(static_cast<int>(scene->width()), static_cast<int>(scene->height()) + 20);
 	QColor color = scene->backgroundBrush().color();
 	this->pixmap.fill(color);
 

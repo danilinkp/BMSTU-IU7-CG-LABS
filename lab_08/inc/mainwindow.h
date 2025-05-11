@@ -33,6 +33,7 @@ private slots:
 	void on_clip_btn_clicked();
 	void on_draw_clipper_btn_clicked();
 	void on_draw_section_btn_clicked();
+	void on_close_clipper_btn_clicked();
 
 private:
 	static void set_preview_color(QWidget *widget, const QColor &color);

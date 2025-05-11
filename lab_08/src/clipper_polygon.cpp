@@ -14,6 +14,7 @@ void ClipperPolygon::draw(Drawer &drawer, const QColor &color) const
 		const QPoint &second_point = points[(i + 1) % points.size()];
 		drawer.draw_line(first_point, second_point, color);
 	}
+	drawer.draw_line(points[0], points.back(), color);
 }
 
 QPoint ClipperPolygon::get_directrice(const QPoint &point_1, const QPoint &point_2)
@@ -57,21 +58,13 @@ bool ClipperPolygon::is_convex()
 
 QPoint ClipperPolygon::get_normal(const QPoint &point_1, const QPoint &point_2, const QPoint &point_3)
 {
-	auto vector = get_directrice(point_1, point_2);
-	QPoint normal{};
+	auto edge = get_directrice(point_1, point_2);
 
-	if (abs(vector.y()) > 1e-6)
-	{
-		normal.setX(1);
-		normal.setY(-vector.x() / vector.y());
-	}
-	else
-	{
-		normal.setX(0);
-		normal.setY(1);
-	}
+	QPoint normal(-edge.y(), edge.x());
 
-	if (scalar_product(QPoint{point_3.x() - point_2.x(), point_3.y() - point_2.y()}, normal) < 0)
+	auto to_inside = get_directrice(point_2, point_3);
+
+	if (scalar_product(normal, to_inside) < 0)
 	{
 		normal.setX(-normal.x());
 		normal.setY(-normal.y());
@@ -85,23 +78,23 @@ LineSegment ClipperPolygon::clip(const LineSegment &segment)
 	if (!is_convex())
 		return {QPoint(), QPoint()};
 	auto directrice = get_directrice(segment.start(), segment.end());
-	int t_bottom = 0, t_top = 1;
+	double t_bottom = 0, t_top = 1;
 
 	for (size_t i = 0; i < points.size(); ++i)
 	{
-		auto normal = get_normal(points[i], points[(i + 1) % points.size()], points[i + 2 % points.size()]);
+		auto normal = get_normal(points[i], points[(i + 1) % points.size()], points[(i + 2) % points.size()]);
 		auto w_i = QPoint{segment.start().x() - points[i].x(), segment.start().y() - points[i].y()};
 
-		auto w_i_scalar = scalar_product(w_i, normal);
-		auto d_scalar = scalar_product(normal, directrice);
-		if (abs(d_scalar) == 0)
+		double w_i_scalar = scalar_product(w_i, normal);
+		double d_scalar = scalar_product(directrice, normal);
+		if (fabs(d_scalar) < 1e-6)
 		{
-			if (w_i_scalar == 0)
+			if (w_i_scalar < 0)
 				return {QPoint(), QPoint()};
 			continue;
 		}
 
-		int t = -(w_i_scalar) / d_scalar;
+		double t = -w_i_scalar / d_scalar;
 		if (d_scalar > 0)
 		{
 			if (t > 1)
@@ -120,5 +113,8 @@ LineSegment ClipperPolygon::clip(const LineSegment &segment)
 			return {QPoint(), QPoint()};
 	}
 
-	return {segment.start() + directrice * t_bottom, segment.start() + directrice * t_top};
+	return {QPoint{static_cast<int>(round(segment.start().x() + t_bottom * directrice.x())),
+				   static_cast<int>(round(segment.start().y() + t_bottom * directrice.y()))},
+			QPoint{static_cast<int>(round(segment.start().x() + t_top * directrice.x())),
+				   static_cast<int>(round(segment.start().y() + t_top * directrice.y()))}};
 }

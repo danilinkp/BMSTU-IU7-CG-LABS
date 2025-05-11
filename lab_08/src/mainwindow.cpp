@@ -5,6 +5,7 @@
 #include <QColorDialog>
 #include <QDoubleValidator>
 #include <QMessageBox>
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
@@ -132,54 +133,60 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 	{
 		if (input_mode == InputMode::None || input_mode == InputMode::ClipperSecond)
 		{
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  0,
-									  new QTableWidgetItem(QString::number(pos.x())));
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  1,
-									  new QTableWidgetItem(QString::number(pos.y())));
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  0,
-									  new QTableWidgetItem(QString::number(pos.x())));
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  1,
-									  new QTableWidgetItem(QString::number(pos.y())));
-			first_point = pos;
-			last_pos = pos;
-			input_mode = InputMode::ClipperFirst;
+			if (input_mode == InputMode::None)
+			{
+				clipped_segments.clear();
+				ui->points_table->setRowCount(0);
+				clipper_points.clear();
+				delete clipper;
+				clipper = nullptr;
+				redraw_scene();
+			}
+			int row = ui->points_table->rowCount();
+			ui->points_table->insertRow(row);
+			ui->points_table->setItem(row, 0, new QTableWidgetItem(QString::number(pos.x())));
+			ui->points_table->setItem(row, 1, new QTableWidgetItem(QString::number(pos.y())));
+			clipper_points.push_back(pos);
+			if (clipper_points.size() == 1)
+			{
+				first_point = pos;
+				last_pos = pos;
+				input_mode = InputMode::ClipperFirst;
+			}
+			else
+			{
+				drawer->draw_line(last_pos, pos, clipper_color);
+				drawer->render();
+				last_pos = pos;
+				input_mode = InputMode::ClipperSecond;
+			}
 		}
 		else if (input_mode == InputMode::ClipperFirst)
 		{
-			clipped_segments.clear();
-			ui->points_table->insertRow(ui->points_table->rowCount());
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  0,
-									  new QTableWidgetItem(QString::number(pos.x())));
-			ui->points_table->setItem(ui->points_table->rowCount() - 1,
-									  1,
-									  new QTableWidgetItem(QString::number(pos.y())));
-			delete clipper;
+			int row = ui->points_table->rowCount();
+			ui->points_table->insertRow(row);
+			ui->points_table->setItem(row, 0, new QTableWidgetItem(QString::number(pos.x())));
+			ui->points_table->setItem(row, 1, new QTableWidgetItem(QString::number(pos.y())));
 			clipper_points.push_back(pos);
 			drawer->draw_line(last_pos, pos, clipper_color);
 			drawer->render();
 			last_pos = pos;
+			input_mode = InputMode::ClipperSecond;
 		}
 	}
 	else if (event->button() == Qt::MiddleButton)
 	{
 		if (clipper_points.size() < 3)
-			QMessageBox::warning(this,
-								 "Ошибка",
-								 "Недостаточно точек для замыкания отсекателя. Нужно минимум 3 точки.");
-		else
 		{
-			drawer->draw_line(last_pos, first_point, clipper_color);
-			delete clipper;
-			clipper_points.insert(clipper_points.begin(), first_point);
-			clipper = new ClipperPolygon(clipper_points);
-			redraw_scene();
-			input_mode = InputMode::None;
+			QMessageBox::warning(this, "Ошибка", "Недостаточно точек для замыкания отсекателя. Нужно минимум 3 точки.");
+			return;
 		}
+		drawer->draw_line(last_pos, first_point, clipper_color);
+		drawer->render();
+		delete clipper;
+		clipper = new ClipperPolygon(clipper_points);
+		redraw_scene();
+		input_mode = InputMode::None;
 	}
 }
 
@@ -203,7 +210,10 @@ void MainWindow::on_clip_btn_clicked()
 	{
 		Clipper clipper_obj(clipper);
 		clipped_segments = clipper_obj.clip_segments(segments);
-		redraw_scene();
+		if (!clipper->is_convex())
+			QMessageBox::warning(this, "Ошибка", "Многоугольник должен быть выпуклым.");
+		else
+			redraw_scene();
 	}
 }
 
@@ -227,11 +237,64 @@ void MainWindow::on_draw_clipper_btn_clicked()
 {
 	int x = ui->x_clipper_edit->text().toInt();
 	int y = ui->y_clipper_edit->text().toInt();
-	QPoint vertex(x, y);
+	QPoint pos(x, y);
 
 
-	clipped_segments.clear();
-	delete clipper;
-//	clipper = new ClipperRectangle(left, right);
-	redraw_scene();
+	if (input_mode == InputMode::None || input_mode == InputMode::ClipperSecond)
+	{
+		if (input_mode == InputMode::None)
+		{
+			clipped_segments.clear();
+			ui->points_table->setRowCount(0);
+			clipper_points.clear();
+			delete clipper;
+			clipper = nullptr;
+			redraw_scene();
+		}
+		int row = ui->points_table->rowCount();
+		ui->points_table->insertRow(row);
+		ui->points_table->setItem(row, 0, new QTableWidgetItem(QString::number(pos.x())));
+		ui->points_table->setItem(row, 1, new QTableWidgetItem(QString::number(pos.y())));
+		clipper_points.push_back(pos);
+		if (clipper_points.size() == 1)
+		{
+			first_point = pos;
+			last_pos = pos;
+			input_mode = InputMode::ClipperFirst;
+		}
+		else
+		{
+			drawer->draw_line(last_pos, pos, clipper_color);
+			drawer->render();
+			last_pos = pos;
+			input_mode = InputMode::ClipperSecond;
+		}
+	}
+	else if (input_mode == InputMode::ClipperFirst)
+	{
+		int row = ui->points_table->rowCount();
+		ui->points_table->insertRow(row);
+		ui->points_table->setItem(row, 0, new QTableWidgetItem(QString::number(pos.x())));
+		ui->points_table->setItem(row, 1, new QTableWidgetItem(QString::number(pos.y())));
+		clipper_points.push_back(pos);
+		drawer->draw_line(last_pos, pos, clipper_color);
+		drawer->render();
+		last_pos = pos;
+		input_mode = InputMode::ClipperSecond;
+	}
+}
+
+void MainWindow::on_close_clipper_btn_clicked()
+{
+	if (clipper_points.size() < 3)
+		QMessageBox::warning(this, "Ошибка", "Недостаточно точек для замыкания отсекателя. Нужно минимум 3 точки.");
+	else
+	{
+		drawer->draw_line(last_pos, first_point, clipper_color);
+		drawer->render();
+		delete clipper;
+		clipper = new ClipperPolygon(clipper_points);
+		redraw_scene();
+		input_mode = InputMode::None;
+	}
 }

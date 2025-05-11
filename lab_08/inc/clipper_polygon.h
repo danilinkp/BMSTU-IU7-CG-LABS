@@ -6,7 +6,7 @@
 class ClipperPolygon: public ClipperShape
 {
 public:
-	ClipperPolygon(const std::vector<QPoint> &points);
+	explicit ClipperPolygon(const std::vector<QPoint> &points);
 	void draw(Drawer &drawer, const QColor &color) const override;
 	[[nodiscard]] LineSegment clip(const LineSegment &segment) override;
 	bool is_convex();

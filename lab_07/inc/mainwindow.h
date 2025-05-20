@@ -36,7 +36,7 @@ private slots:
 
 private:
 	static void set_preview_color(QWidget *widget, const QColor &color);
-	void redraw_scene();
+	void redraw_scene(bool is_cliped = false);
 
 private:
 	Ui::MainWindow *ui;

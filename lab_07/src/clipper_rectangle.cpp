@@ -1,3 +1,4 @@
+#include <iostream>
 #include "clipper_rectangle.h"
 
 ClipperRectangle::ClipperRectangle(const QPoint &left, const QPoint &right)
@@ -57,10 +58,10 @@ LineSegment ClipperRectangle::clip(const LineSegment &segment) const
 	if (T1 & T2)
 		return {QPoint(0, 0), QPoint(0, 0)};
 
-	int x_left = std::min(m_left.x(), m_right.x()) - 1;
-	int x_right = std::max(m_left.x(), m_right.x()) + 1;
-	int y_top = std::max(m_left.y(), m_right.y()) - 1;
-	int y_bottom = std::min(m_left.y(), m_right.y()) + 1;
+	int x_left = std::min(m_left.x(), m_right.x());
+	int x_right = std::max(m_left.x(), m_right.x());
+	int y_top = std::max(m_left.y(), m_right.y());
+	int y_bottom = std::min(m_left.y(), m_right.y());
 
 	// Шаги 9-10: Проверка видимости концов отрезка
 	QPoint Q;
@@ -172,4 +173,15 @@ LineSegment ClipperRectangle::clip(const LineSegment &segment) const
 	}
 
 	return {r1, r2};
+}
+
+
+QRectF ClipperRectangle::get_rectangle() const
+{
+	int left = std::min(m_left.x(), m_right.x());
+	int top = std::min(m_left.y(), m_right.y());
+	int width = std::abs(m_right.x() - m_left.x());
+	int height = std::abs(m_right.y() - m_left.y());
+
+	return QRectF(left, top, width, height);
 }

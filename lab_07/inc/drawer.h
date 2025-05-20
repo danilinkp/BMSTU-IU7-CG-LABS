@@ -11,6 +11,9 @@ public:
 	Drawer(QGraphicsScene *scene, QPixmap pixmap);
 	void draw_line(const QPoint &point1, const QPoint &point2, const QColor &color);
 	void draw_rect(const QPoint &point1, const QPoint &point2, const QColor &color);
+
+	void fill_rectangle(const QRectF &rect, const QColor &color);
+
 	void clear();
 	void render();
 

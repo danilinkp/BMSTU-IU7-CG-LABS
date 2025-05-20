@@ -10,6 +10,8 @@ public:
 	[[nodiscard]] bool contains(const QPoint &point) const override;
 	void draw(Drawer &drawer, const QColor &color) const override;
 	[[nodiscard]] LineSegment clip(const LineSegment &segment) const override;
+
+	[[nodiscard]] QRectF get_rectangle() const;
 private:
 	QPoint m_left, m_right;
 private:

@@ -5,6 +5,7 @@
 #include <QColorDialog>
 #include <QDoubleValidator>
 #include <QMessageBox>
+#include <iostream>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
@@ -120,9 +121,19 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 		}
 		else if (input_mode == InputMode::SegmentFirst)
 		{
-			LineSegment segment(first_point, pos);
+			QPoint adjusted_pos = pos;
+			if (event->modifiers() & Qt::ControlModifier)
+			{
+				int dx = qAbs(pos.x() - first_point.x());
+				int dy = qAbs(pos.y() - first_point.y());
+				if (dx > dy)
+					adjusted_pos.setY(first_point.y());
+				else
+					adjusted_pos.setX(first_point.x());
+			}
+			LineSegment segment(first_point, adjusted_pos);
 			segments.push_back(segment);
-			drawer->draw_line(first_point, pos, section_color);
+			drawer->draw_line(first_point, adjusted_pos, section_color);
 			drawer->render();
 			input_mode = InputMode::None;
 		}
@@ -139,20 +150,36 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 			clipped_segments.clear();
 			delete clipper;
 			clipper = new ClipperRectangle(first_point, pos);
+			int x_left = std::min(first_point.x(), pos.x());
+			int x_right = std::max(first_point.x(), pos.x());
+			int y_top = std::min(first_point.y(), pos.y());
+			int y_bottom = std::max(first_point.y(), pos.y());
+			ui->x_left_edit->setText(QString("%1").arg(x_left));
+			ui->y_left_edit->setText(QString("%1").arg(y_top));
+			ui->x_right_edit->setText(QString("%1").arg(x_right));
+			ui->y_right_edit->setText(QString("%1").arg(y_bottom));
 			redraw_scene();
 			input_mode = InputMode::None;
 		}
 	}
 }
 
-void MainWindow::redraw_scene()
+void MainWindow::redraw_scene(bool is_cliped)
 {
 	drawer->clear();
 	for (const auto &segment : segments)
 		drawer->draw_line(segment.start(), segment.end(), section_color);
 
 	if (clipper)
+	{
+		if (is_cliped)
+		{
+			auto rectangle_clipper = dynamic_cast<ClipperRectangle*>(clipper);
+			if (rectangle_clipper)
+				drawer->fill_rectangle(rectangle_clipper->get_rectangle(), Qt::white);
+		}
 		clipper->draw(*drawer, clipper_color);
+	}
 
 	for (const auto &clipped_segment : clipped_segments)
 		drawer->draw_line(clipped_segment.start(), clipped_segment.end(), result_color);
@@ -165,7 +192,7 @@ void MainWindow::on_clip_btn_clicked()
 	{
 		Clipper clipper_obj(clipper);
 		clipped_segments = clipper_obj.clip_segments(segments);
-		redraw_scene();
+		redraw_scene(true);
 	}
 }
 
@@ -173,11 +200,11 @@ void MainWindow::on_draw_section_btn_clicked()
 {
 	int x_start = ui->x_start_edit->text().toInt();
 	int y_start = ui->y_start_edit->text().toInt();
-	QPoint start(x_start, y_start + 1);
+	QPoint start(x_start, y_start);
 
 	int x_end = ui->x_end_edit->text().toInt();
 	int y_end = ui->y_end_edit->text().toInt();
-	QPoint end(x_end, y_end + 1);
+	QPoint end(x_end, y_end);
 
 	LineSegment segment(start, end);
 	segments.push_back(segment);

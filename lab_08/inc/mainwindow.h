@@ -34,10 +34,14 @@ private slots:
 	void on_draw_clipper_btn_clicked();
 	void on_draw_section_btn_clicked();
 	void on_close_clipper_btn_clicked();
+	void on_parallel_sections_btn_clicked();
 
 private:
 	static void set_preview_color(QWidget *widget, const QColor &color);
 	void redraw_scene();
+	void createParallelSegment(int sideIndex, double distance, bool outward);
+	QPoint calculatePolygonCenter();
+
 
 private:
 	Ui::MainWindow *ui;

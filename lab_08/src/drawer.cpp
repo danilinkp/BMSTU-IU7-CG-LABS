@@ -12,6 +12,7 @@ void Drawer::draw_line(const QPoint &point1, const QPoint &point2, const QColor 
 {
 	QPainter painter(&pixmap);
 	QPen pen(color);
+	pen.setWidth(2);
 	painter.setPen(pen);
 	painter.drawLine(point1, point2);
 }

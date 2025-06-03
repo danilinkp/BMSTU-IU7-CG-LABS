@@ -6,6 +6,8 @@
 #include <QDoubleValidator>
 #include <QMessageBox>
 #include <iostream>
+#include <QListWidgetItem>
+#include <QComboBox>
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ui(new Ui::MainWindow)
@@ -21,12 +23,19 @@ MainWindow::MainWindow(QWidget *parent)
 	ui->y_end_edit->setValidator(validator);
 
 	ui->x_clipper_edit->setValidator(validator);
-	ui->y_clipper_edit->setValidator(validator);;
+	ui->y_clipper_edit->setValidator(validator);
 
 	ui->points_table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
+	ui->graphics_view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	ui->graphics_view->setDragMode(QGraphicsView::NoDrag);
+	ui->graphics_view->setRenderHint(QPainter::Antialiasing);
+	ui->graphics_view->setRenderHint(QPainter::SmoothPixmapTransform);
+
 	scene = new QGraphicsScene(this);
 	ui->graphics_view->setScene(scene);
+	ui->graphics_view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	scene->setBackgroundBrush(Qt::white);
 	scene->setSceneRect(0, 0, ui->graphics_view->width(), ui->graphics_view->height());
 	ui->graphics_view->setAlignment(Qt::AlignLeft | Qt::AlignTop);
@@ -95,6 +104,7 @@ void MainWindow::on_clear_btn_clicked()
 {
 	segments.clear();
 	clipped_segments.clear();
+	clipper_points.clear();
 	delete clipper;
 	clipper = nullptr;
 	input_mode = InputMode::None;
@@ -181,10 +191,27 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
 			QMessageBox::warning(this, "Ошибка", "Недостаточно точек для замыкания отсекателя. Нужно минимум 3 точки.");
 			return;
 		}
+
+		ClipperPolygon temp_clipper(clipper_points);
+		if (!temp_clipper.is_convex())
+		{
+			QMessageBox::warning(this, "Ошибка", "Многоугольник должен быть выпуклым.");
+			clipped_segments.clear();
+			ui->points_table->setRowCount(0);
+			clipper_points.clear();
+			delete clipper;
+			clipper = nullptr;
+			input_mode = InputMode::None;
+			redraw_scene();
+			return;
+		}
+
 		drawer->draw_line(last_pos, first_point, clipper_color);
 		drawer->render();
 		delete clipper;
 		clipper = new ClipperPolygon(clipper_points);
+		Clipper clipper_obj(clipper);
+		clipped_segments = clipper_obj.clip_segments(segments);
 		redraw_scene();
 		input_mode = InputMode::None;
 	}
@@ -297,4 +324,152 @@ void MainWindow::on_close_clipper_btn_clicked()
 		redraw_scene();
 		input_mode = InputMode::None;
 	}
+}
+
+void MainWindow::on_parallel_sections_btn_clicked()
+{
+	if (!clipper || clipper_points.size() < 3)
+	{
+		QMessageBox::warning(this, "Ошибка", "Сначала создайте отсекатель (минимум 3 точки).");
+		return;
+	}
+
+	QDialog dialog(nullptr);
+
+	QFont font = dialog.font();
+	font.setPointSize(14);
+
+	dialog.setFont(font);
+	dialog.setWindowTitle("Параллельные отрезки");
+	dialog.setModal(true);
+	dialog.resize(600, 400);
+
+	auto *layout = new QVBoxLayout(&dialog);
+
+	auto *sidesLabel = new QLabel("Выберите стороны отсекателя:");
+	layout->addWidget(sidesLabel);
+
+	auto *sidesListWidget = new QListWidget();
+	sidesListWidget->setSelectionMode(QAbstractItemView::MultiSelection);
+
+	for (size_t i = 0; i < clipper_points.size(); ++i)
+	{
+		size_t next_i = (i + 1) % clipper_points.size();
+		QString sideText = QString("Сторона %1: (%2,%3) - (%4,%5)")
+			.arg(i + 1)
+			.arg(clipper_points[i].x())
+			.arg(clipper_points[i].y())
+			.arg(clipper_points[next_i].x())
+			.arg(clipper_points[next_i].y());
+		sidesListWidget->addItem(sideText);
+	}
+	layout->addWidget(sidesListWidget);
+
+	auto *distanceLabel = new QLabel("Расстояние от стороны:");
+	layout->addWidget(distanceLabel);
+
+	auto *distanceEdit = new QLineEdit();
+	distanceEdit->setText("50");
+	auto *validator = new QDoubleValidator(1.0, 1000.0, 2, &dialog);
+	validator->setLocale(QLocale::C);
+	distanceEdit->setValidator(validator);
+	layout->addWidget(distanceEdit);
+
+	auto *directionLabel = new QLabel("Направление:");
+	layout->addWidget(directionLabel);
+
+	auto *directionCombo = new QComboBox();
+	directionCombo->addItem("Внутрь отсекателя", 0);
+	directionCombo->addItem("Наружу отсекателя", 1);
+	layout->addWidget(directionCombo);
+
+	auto *buttonLayout = new QHBoxLayout();
+	auto *okButton = new QPushButton("OK");
+	auto *cancelButton = new QPushButton("Отмена");
+	buttonLayout->addWidget(okButton);
+	buttonLayout->addWidget(cancelButton);
+	layout->addLayout(buttonLayout);
+
+	connect(okButton, &QPushButton::clicked, &dialog, &QDialog::accept);
+	connect(cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
+	if (dialog.exec() == QDialog::Accepted)
+	{
+		QList<QListWidgetItem *> selectedItems = sidesListWidget->selectedItems();
+		if (selectedItems.isEmpty())
+		{
+			QMessageBox::warning(this, "Ошибка", "Выберите хотя бы одну сторону.");
+			return;
+		}
+
+		double distance = distanceEdit->text().toDouble();
+		bool outward = directionCombo->currentData().toInt() == 1;
+
+		for (QListWidgetItem *item : selectedItems)
+		{
+			int sideIndex = sidesListWidget->row(item);
+			createParallelSegment(sideIndex, distance, outward);
+		}
+
+		drawer->render();
+	}
+}
+
+void MainWindow::createParallelSegment(int sideIndex, double distance, bool outward)
+{
+	if (sideIndex < 0 || sideIndex >= static_cast<int>(clipper_points.size()))
+		return;
+
+	size_t current = static_cast<size_t>(sideIndex);
+	size_t next = (current + 1) % clipper_points.size();
+
+	QPoint p1 = clipper_points[current];
+	QPoint p2 = clipper_points[next];
+
+	QVector2D sideVector(p2.x() - p1.x(), p2.y() - p1.y());
+
+	sideVector.normalize();
+
+	QVector2D normalVector(-sideVector.y(), sideVector.x());
+
+	QPoint center = calculatePolygonCenter();
+	QPoint midPoint((p1.x() + p2.x()) / 2, (p1.y() + p2.y()) / 2);
+
+	QVector2D toCenter(center.x() - midPoint.x(), center.y() - midPoint.y());
+
+	bool normalPointsOutward = QVector2D::dotProduct(normalVector, toCenter) < 0;
+
+	if (outward != normalPointsOutward)
+		normalVector = -normalVector;
+
+	QPoint parallelP1(
+		static_cast<int>(p1.x() + normalVector.x() * distance),
+		static_cast<int>(p1.y() + normalVector.y() * distance)
+	);
+
+	QPoint parallelP2(
+		static_cast<int>(p2.x() + normalVector.x() * distance),
+		static_cast<int>(p2.y() + normalVector.y() * distance)
+	);
+
+	LineSegment parallelSegment(parallelP1, parallelP2);
+	segments.push_back(parallelSegment);
+
+	drawer->draw_line(parallelP1, parallelP2, section_color);
+}
+
+QPoint MainWindow::calculatePolygonCenter()
+{
+	if (clipper_points.empty())
+		return {0, 0};
+
+	int sumX = 0, sumY = 0;
+	for (const QPoint &point : clipper_points)
+	{
+		sumX += point.x();
+		sumY += point.y();
+	}
+
+	return {sumX / static_cast<int>(clipper_points.size()),
+			sumY / static_cast<int>(clipper_points.size())};
 }

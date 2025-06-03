@@ -1,3 +1,4 @@
+#include <iostream>
 #include "clipper_polygon.h"
 
 
@@ -37,21 +38,32 @@ bool ClipperPolygon::is_convex()
 	if (points.size() < 3)
 		return false;
 
-	auto current_vector = get_directrice(points[0], points[1]);
-	auto next_vector = get_directrice(points[1], points[2]);
+	int sign = 0;
+	size_t n = points.size();
 
-	int sign = cross_product(current_vector, next_vector) > 0 ? 1 : -1;
-
-	for (size_t i = 0; i < points.size() - 1; ++i)
+	for (size_t i = 0; i < n && sign == 0; ++i)
 	{
-		current_vector = get_directrice(points[i], points[(i + 1) % points.size()]);
-		next_vector = get_directrice(points[(i + 1) % points.size()], points[(i + 2) % points.size()]);
-		if (sign * cross_product(current_vector, next_vector) < 0)
-			return false;
+		auto current_vector = get_directrice(points[i], points[(i + 1) % n]);
+		auto next_vector = get_directrice(points[(i + 1) % n], points[(i + 2) % n]);
+		int cross = cross_product(current_vector, next_vector);
+		if (cross != 0)
+		{
+			sign = cross > 0 ? 1 : -1;
+		}
 	}
 
-	if (sign < 0)
-		reverse(points.begin(), points.end());
+	if (sign == 0)
+		return false;
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		auto current_vector = get_directrice(points[i], points[(i + 1) % n]);
+		auto next_vector = get_directrice(points[(i + 1) % n], points[(i + 2) % n]);
+		int cross = cross_product(current_vector, next_vector);
+
+		if (cross != 0 && sign * cross < 0)
+			return false;
+	}
 
 	return true;
 }
@@ -85,6 +97,7 @@ LineSegment ClipperPolygon::clip(const LineSegment &segment)
 		auto normal = get_normal(points[i], points[(i + 1) % points.size()], points[(i + 2) % points.size()]);
 		auto w_i = QPoint{segment.start().x() - points[i].x(), segment.start().y() - points[i].y()};
 
+		std::cout << i + 1 << "-ая сторона:" << std::endl;
 		double w_i_scalar = scalar_product(w_i, normal);
 		double d_scalar = scalar_product(directrice, normal);
 		if (fabs(d_scalar) < 1e-6)
@@ -97,6 +110,7 @@ LineSegment ClipperPolygon::clip(const LineSegment &segment)
 		double t = -w_i_scalar / d_scalar;
 		if (d_scalar > 0)
 		{
+			std::cout << "Ищем t нижнене, t нижнее = " << t << std::endl;
 			if (t > 1)
 				return {QPoint(), QPoint()};
 			else
@@ -104,6 +118,7 @@ LineSegment ClipperPolygon::clip(const LineSegment &segment)
 		}
 		else
 		{
+			std::cout << "Ищем t верхнее, t верхнее = " << t << std::endl;
 			if (t < 0)
 				return {QPoint(), QPoint()};
 			else
